@@ -19,5 +19,6 @@ public:
 
 private:
 
+    void setUi();
 };
 #endif // APPLICATION_H

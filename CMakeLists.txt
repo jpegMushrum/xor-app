@@ -9,6 +9,13 @@ qt_add_executable(xor-app
     WIN32 MACOSX_BUNDLE
     main.cpp
     src/application.cpp src/application.h
+    src/utils/structures.h
+    src/utils/app_state.h src/utils/app_state.cpp
+    src/utils/file_processor.h src/utils/file_processor.cpp
+    src/services/file_search_service.h src/services/file_search_service.cpp
+    src/services/file_processing_service.h src/services/file_processing_service.cpp
+    src/services/orchestrator.h src/services/orchestrator.cpp
+    src/controllers/main_window_controller.h src/controllers/main_window_controller.cpp
 )
 
 target_link_libraries(xor-app

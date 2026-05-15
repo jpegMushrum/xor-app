@@ -1,4 +1,4 @@
-#include "application.h"
+#include "src/application.h"
 
 #include <QApplication>
 
