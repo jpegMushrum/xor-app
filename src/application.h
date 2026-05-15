@@ -18,6 +18,6 @@ public:
     ~Application() override;
 
 private:
-    Ui::Application *ui;
+
 };
 #endif // APPLICATION_H

@@ -8,9 +8,7 @@ qt_standard_project_setup()
 qt_add_executable(xor-app
     WIN32 MACOSX_BUNDLE
     main.cpp
-    application.cpp
-    application.h
-    application.ui
+    src/application.cpp src/application.h
 )
 
 target_link_libraries(xor-app
