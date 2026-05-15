@@ -1,2 +1,7 @@
-# xor-app
-GUI app on QT, applying xor with 8-bit variable on big files.
+# Xor App
+
+Приложение для применения операции xor для файлов.
+
+## Документация
+
+Описание сущностей, решений можно прочитать в папке [doc](./doc/).
