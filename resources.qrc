@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>style/application.qss</file>
+        <file>style/icons/drop-down-arrow.png</file>
+        <file>style/icons/check.png</file>
+    </qresource>
+</RCC>

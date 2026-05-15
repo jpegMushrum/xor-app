@@ -1,0 +1,126 @@
+/* Light Theme */
+
+QMainWindow {
+    background-color: #f5f5f5;
+}
+
+QWidget {
+    background-color: #f5f5f5;
+    color: #333333;
+}
+
+QLineEdit {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    padding: 5px;
+    selection-background-color: #0078d4;
+    selection-color: #ffffff;
+}
+
+QLineEdit:focus {
+    border: 2px solid #0078d4;
+}
+
+QCheckBox {
+    color: #333333;
+    spacing: 5px;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 2px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #0078d4;
+    border: 1px solid #0078d4;
+    border-radius: 2px;
+    image: url(:/style/icons/check.png);
+}
+
+QLabel {
+    color: #333333;
+    background-color: transparent;
+}
+
+QComboBox {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    padding: 5px;
+    selection-background-color: #0078d4;
+}
+
+QComboBox:focus {
+    border: 2px solid #0078d4;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    image: url(:/style/icons/drop-down-arrow.png);
+    padding: 3px;
+    width: 15px;
+    border-left: 1px solid #cccccc;
+}
+
+QPushButton {
+    background-color: #0078d4;
+    color: #ffffff;
+    border-radius: 3px;
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #106ebe;
+}
+
+QPushButton:pressed {
+    background-color: #005a9e;
+}
+
+QPushButton:disabled {
+    background-color: #cccccc;
+    color: #999999;
+}
+
+QToolButton {
+    background-color: transparent;
+    color: #333333;
+    border: none;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+QToolButton:hover {
+    background-color: #e8e8e8;
+}
+
+QToolButton:pressed {
+    background-color: #d0d0d0;
+}
+
+QToolButton:disabled {
+    color: #999999;
+}
+
+QStatusBar {
+    background-color: #ffffff;
+    color: #333333;
+    border-bottom: 2px solid #0078d4;
+    padding: 3px;
+}
+
+QStatusBar::item {
+    border: none;
+}
