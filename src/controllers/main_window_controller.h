@@ -43,6 +43,9 @@ private:
     // Показать ошибку валидации
     void showValidationError(const QString &message);
 
+    // Показать ошибку во время исполнения
+    void showRuntimeError(const QString &message);
+
     Application *m_mainWindow;
     Orchestrator *m_orchestrator;
     WorkingState m_currentState;

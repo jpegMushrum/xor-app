@@ -33,23 +33,17 @@ void MainWindowController::initialize()
     // Подключить сигналы от оркестратора
     if (m_orchestrator)
     {
-        connect(m_orchestrator, &Orchestrator::processingStarted,
-                this, [this]()
-                {
-                    m_currentState = WorkingState::Running;
-                    m_mainWindow->updateStatusBar(m_currentState);
-        });
         connect(m_orchestrator, &Orchestrator::filesMapped,
                 this, [this](int fileCount)
                 { qDebug() << "Files mapped:" << fileCount; });
-        connect(m_orchestrator, &Orchestrator::processingFinished,
-                this, [this]()
-                {
-                    m_currentState = WorkingState::Idle;
-                    m_mainWindow->updateStatusBar(m_currentState);
-        });
+
         connect(m_orchestrator, &Orchestrator::processingError,
-                this, &MainWindowController::showValidationError);
+                this, [this](const QString& msg) {
+            m_currentState = WorkingState::Cancelled;
+            m_mainWindow->updateStatusBar(m_currentState);
+
+            showRuntimeError(msg);
+        });
     }
 
     m_mainWindow->updateStatusBar(m_currentState);
@@ -70,15 +64,16 @@ void MainWindowController::onStartButtonClicked()
     }
     else
     {
-        // Установить параметры поиска в оркестратор
         if (m_orchestrator)
         {
+            m_currentState = WorkingState::Running;
+            m_mainWindow->updateStatusBar(m_currentState);
+
             m_orchestrator->setSearchParameters(
                 m_mainWindow->getSourceDirectory(),
                 m_mainWindow->getTargetDirectory(),
                 m_mainWindow->getFileMask());
 
-            // Запустить обработку
             m_orchestrator->startProcessing();
         }
     }
@@ -171,4 +166,9 @@ bool MainWindowController::validateInputs()
 void MainWindowController::showValidationError(const QString &message)
 {
     QMessageBox::warning(m_mainWindow, "Ошибка валидации", message);
+}
+
+void MainWindowController::showRuntimeError(const QString &message)
+{
+    QMessageBox::warning(m_mainWindow, "Ошибка во время исполнения", message);
 }
