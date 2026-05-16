@@ -36,7 +36,7 @@ void Application::setUi()
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
     mainLayout->setSpacing(15);
 
-    QHBoxLayout *firstRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *firstRowLayout = new QHBoxLayout();
     firstRowLayout->setSpacing(3);
 
     m_filesMask = new QLineEdit(central);
@@ -55,7 +55,7 @@ void Application::setUi()
 
     mainLayout->addLayout(firstRowLayout);
 
-    QHBoxLayout *secondRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *secondRowLayout = new QHBoxLayout();
     secondRowLayout->setSpacing(2);
 
     m_sourceDir = new QLineEdit(central);
@@ -78,7 +78,7 @@ void Application::setUi()
 
     mainLayout->addLayout(secondRowLayout);
 
-    QHBoxLayout *thirdRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *thirdRowLayout = new QHBoxLayout();
 
     QLabel *similarFilesText = new QLabel(central);
     similarFilesText->setText("При повторении имен файлов:");
@@ -93,7 +93,7 @@ void Application::setUi()
     thirdRowLayout->addStretch();
     mainLayout->addLayout(thirdRowLayout);
 
-    QHBoxLayout *fourthRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *fourthRowLayout = new QHBoxLayout();
     fourthRowLayout->setSpacing(3);
 
     QLabel *restartByTimerLabel = new QLabel(central);
@@ -120,7 +120,7 @@ void Application::setUi()
     fourthRowLayout->addStretch();
     mainLayout->addLayout(fourthRowLayout);
 
-    QHBoxLayout *fifthRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *fifthRowLayout = new QHBoxLayout();
     fifthRowLayout->setSpacing(3);
 
     QLabel *editMaskLabel = new QLabel(central);
@@ -141,7 +141,7 @@ void Application::setUi()
 
     mainLayout->addLayout(fifthRowLayout);
 
-    QHBoxLayout *sixthRowLayout = new QHBoxLayout(central);
+    QHBoxLayout *sixthRowLayout = new QHBoxLayout();
     sixthRowLayout->setSpacing(3);
 
     m_statusBar = new QStatusBar(central);
@@ -159,8 +159,6 @@ void Application::setUi()
     sixthRowLayout->addWidget(m_cancelButton);
 
     mainLayout->addLayout(sixthRowLayout);
-
-    central->setLayout(mainLayout);
 }
 
 void Application::setStyle()

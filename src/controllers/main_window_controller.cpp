@@ -108,22 +108,25 @@ bool MainWindowController::validateInputs()
     QString sourceDir = m_mainWindow->getSourceDirectory();
     QString targetDir = m_mainWindow->getTargetDirectory();
     QString fileMask = m_mainWindow->getFileMask();
+    QString errorMessages = "";
 
     if (sourceDir.isEmpty())
     {
-        showValidationError("Укажите исходную папку");
-        return false;
+        errorMessages = "Укажите исходную папку";
     }
 
     if (targetDir.isEmpty())
     {
-        showValidationError("Укажите папку для результатов");
-        return false;
+        errorMessages += "\nУкажите папку для результатов";
     }
 
     if (fileMask.isEmpty())
     {
-        showValidationError("Укажите маску файлов");
+        errorMessages += "\nУкажите маску файлов";
+    }
+
+    if (!errorMessages.isEmpty()) {
+        showValidationError(errorMessages);
         return false;
     }
 
