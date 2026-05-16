@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include "../utils/structures.h"
 
 class Orchestrator;
 class Application;
@@ -19,6 +20,7 @@ public:
     // Инициализировать контроллер
     void initialize();
 
+private slots:
     // Обработать нажатие кнопки "Старт"
     void onStartButtonClicked();
 
@@ -28,33 +30,22 @@ public:
     // Обработать нажатие кнопки "Отменить"
     void onCancelButtonClicked();
 
-    // Обработать выбор исходной директории
-    void onSourceDirectorySelected(const QString &directory);
+    // Обработать запрос на выбор исходной директории
+    void onBrowseSourceDirectory();
 
-    // Обработать выбор результирующей директории
-    void onResultDirectorySelected(const QString &directory);
-
-    // Обработать изменение маски файлов
-    void onFileMaskChanged(const QString &mask);
-
-    // Обработать изменение состояния флага удаления
-    void onDeleteSourceFilesToggled(bool checked);
-
-    // Обновить UI с информацией о прогрессе
-    void updateProgressUI();
-
-    // Показать сообщение об ошибке
-    void showErrorMessage(const QString &message);
-
-    // Показать сообщение об успехе
-    void showSuccessMessage(const QString &message);
+    // Обработать запрос на выбор результирующей директории
+    void onBrowseTargetDirectory();
 
 private:
+    // Проверить корректность параметров
+    bool validateInputs();
+
+    // Показать ошибку валидации
+    void showValidationError(const QString &message);
+
     Application *m_mainWindow;
     Orchestrator *m_orchestrator;
-
-    // Подключить сигналы и слоты
-    void connectSignals();
+    WorkingState m_currentState;
 };
 
 #endif // MAIN_WINDOW_CONTROLLER_H

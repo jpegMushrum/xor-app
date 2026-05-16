@@ -1,7 +1,11 @@
 #include "main_window_controller.h"
+#include "../application.h"
+#include "../services/orchestrator.h"
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindowController::MainWindowController(Application *mainWindow, QObject *parent)
-    : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr)
+    : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr), m_currentState(WorkingState::Idle)
 {
 }
 
@@ -11,44 +15,122 @@ MainWindowController::~MainWindowController()
 
 void MainWindowController::initialize()
 {
+    connect(m_mainWindow, &Application::browseSourceDirectoryRequested,
+            this, &MainWindowController::onBrowseSourceDirectory);
+    connect(m_mainWindow, &Application::browseTargetDirectoryRequested,
+            this, &MainWindowController::onBrowseTargetDirectory);
+    connect(m_mainWindow, &Application::startProcessing,
+            this, &MainWindowController::onStartButtonClicked);
+    connect(m_mainWindow, &Application::pauseProcessing,
+            this, &MainWindowController::onPauseButtonClicked);
+    connect(m_mainWindow, &Application::cancelProcessing,
+            this, &MainWindowController::onCancelButtonClicked);
+
+    m_mainWindow->updateStatusBar(m_currentState);
 }
 
 void MainWindowController::onStartButtonClicked()
 {
+    if (!validateInputs())
+        return;
+
+    if (m_currentState == WorkingState::Paused)
+    {
+        if (m_orchestrator && m_orchestrator->resumeProcessing())
+        {
+            m_currentState = WorkingState::Running;
+            m_mainWindow->updateStatusBar(m_currentState);
+        }
+    }
+    else
+    {
+        m_currentState = WorkingState::Running;
+        m_mainWindow->updateStatusBar(m_currentState);
+        // TODO: запустить асинхронную обработку через Orchestrator
+    }
 }
 
 void MainWindowController::onPauseButtonClicked()
 {
+    if (m_currentState == WorkingState::Running)
+    {
+        m_currentState = WorkingState::Paused;
+        m_mainWindow->updateStatusBar(m_currentState);
+        if (m_orchestrator)
+            m_orchestrator->pauseProcessing();
+    }
 }
 
 void MainWindowController::onCancelButtonClicked()
 {
+    if (m_currentState == WorkingState::Running || m_currentState == WorkingState::Paused)
+    {
+        m_currentState = WorkingState::Cancelled;
+        m_mainWindow->updateStatusBar(m_currentState);
+        if (m_orchestrator)
+            m_orchestrator->cancelProcessing();
+
+        m_currentState = WorkingState::Idle;
+        m_mainWindow->updateStatusBar(m_currentState);
+    }
 }
 
-void MainWindowController::onSourceDirectorySelected(const QString &directory)
+void MainWindowController::onBrowseSourceDirectory()
 {
+    QString dir = QFileDialog::getExistingDirectory(
+        m_mainWindow,
+        "Выберите исходную папку",
+        m_mainWindow->getSourceDirectory(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (!dir.isEmpty())
+    {
+        m_mainWindow->setSourceDirectory(dir);
+    }
 }
 
-void MainWindowController::onResultDirectorySelected(const QString &directory)
+void MainWindowController::onBrowseTargetDirectory()
 {
+    QString dir = QFileDialog::getExistingDirectory(
+        m_mainWindow,
+        "Выберите папку для результатов",
+        m_mainWindow->getTargetDirectory(),
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (!dir.isEmpty())
+    {
+        m_mainWindow->setTargetDirectory(dir);
+    }
 }
 
-void MainWindowController::onFileMaskChanged(const QString &mask)
+bool MainWindowController::validateInputs()
 {
+    QString sourceDir = m_mainWindow->getSourceDirectory();
+    QString targetDir = m_mainWindow->getTargetDirectory();
+    QString fileMask = m_mainWindow->getFileMask();
+
+    if (sourceDir.isEmpty())
+    {
+        showValidationError("Укажите исходную папку");
+        return false;
+    }
+
+    if (targetDir.isEmpty())
+    {
+        showValidationError("Укажите папку для результатов");
+        return false;
+    }
+
+    if (fileMask.isEmpty())
+    {
+        showValidationError("Укажите маску файлов");
+        return false;
+    }
+
+    return true;
 }
 
-void MainWindowController::onDeleteSourceFilesToggled(bool checked)
+void MainWindowController::showValidationError(const QString &message)
 {
-}
-
-void MainWindowController::updateProgressUI()
-{
-}
-
-void MainWindowController::showErrorMessage(const QString &message)
-{
-}
-
-void MainWindowController::showSuccessMessage(const QString &message)
-{
+    QMessageBox::warning(m_mainWindow, "Ошибка валидации", message);
 }

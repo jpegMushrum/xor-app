@@ -117,7 +117,7 @@ QToolButton:disabled {
 QStatusBar {
     background-color: #ffffff;
     color: #333333;
-    border-bottom: 2px solid #0078d4;
+    border: 2px solid #0078d4;
     padding: 3px;
 }
 

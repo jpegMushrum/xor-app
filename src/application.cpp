@@ -1,4 +1,5 @@
 #include "application.h"
+#include "controllers/main_window_controller.h"
 #include <QWindow>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -17,10 +18,11 @@
 #include <QDirIterator>
 
 Application::Application(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), m_controller(nullptr)
 {
     setUi();
     setStyle();
+    connectUISignals();
     setController();
 }
 
@@ -105,6 +107,7 @@ void Application::setUi()
 
     m_timerSeconds = new QLineEdit(central);
     m_timerSeconds->setText("600");
+    m_timerSeconds->setPlaceholderText("600");
     m_timerSeconds->setMaximumWidth(100);
     m_timerSeconds->setDisabled(true);
     connect(m_restartByTimerCheck, &QCheckBox::toggled, m_timerSeconds, &QLineEdit::setEnabled);
@@ -173,8 +176,119 @@ void Application::setStyle()
 
 void Application::setController()
 {
+    m_controller = new MainWindowController(this, this);
+    m_controller->initialize();
 }
 
 Application::~Application()
 {
+}
+
+QString Application::getSourceDirectory() const
+{
+    return m_sourceDir->text();
+}
+
+QString Application::getTargetDirectory() const
+{
+    return m_targetDir->text();
+}
+
+QString Application::getFileMask() const
+{
+    return m_filesMask->text();
+}
+
+bool Application::isDeleteSourceFilesChecked() const
+{
+    return m_removeSourceFilesCheck->isChecked();
+}
+
+void Application::setSourceDirectory(const QString &path)
+{
+    m_sourceDir->setText(path);
+}
+
+void Application::setTargetDirectory(const QString &path)
+{
+    m_targetDir->setText(path);
+}
+
+void Application::updateStatusBar(WorkingState state)
+{
+    QString statusText;
+    QString startButtonText;
+
+    switch (state)
+    {
+    case WorkingState::Idle:
+        statusText = "";
+        startButtonText = "Старт";
+        setStartButtonEnabled(true);
+        setPauseButtonEnabled(false);
+        setCancelButtonEnabled(false);
+        setBrowseButtonsEnabled(true);
+        break;
+    case WorkingState::Running:
+        statusText = "Обработка...";
+        startButtonText = "Старт";
+        setStartButtonEnabled(false);
+        setPauseButtonEnabled(true);
+        setCancelButtonEnabled(true);
+        setBrowseButtonsEnabled(false);
+        break;
+    case WorkingState::Paused:
+        statusText = "Приостановлено";
+        startButtonText = "Продолжить";
+        setStartButtonEnabled(true);
+        setPauseButtonEnabled(false);
+        setCancelButtonEnabled(true);
+        setBrowseButtonsEnabled(false);
+        break;
+    case WorkingState::Cancelled:
+        statusText = "Отменено";
+        startButtonText = "Старт";
+        setStartButtonEnabled(true);
+        setPauseButtonEnabled(false);
+        setCancelButtonEnabled(false);
+        setBrowseButtonsEnabled(true);
+        break;
+    }
+    m_statusBar->showMessage(statusText);
+    m_startButton->setText(startButtonText);
+}
+
+void Application::setStartButtonEnabled(bool enabled)
+{
+    m_startButton->setEnabled(enabled);
+}
+
+void Application::setPauseButtonEnabled(bool enabled)
+{
+    m_pauseButton->setEnabled(enabled);
+}
+
+void Application::setCancelButtonEnabled(bool enabled)
+{
+    m_cancelButton->setEnabled(enabled);
+}
+
+void Application::setBrowseButtonsEnabled(bool enabled)
+{
+    m_browseSourceButton->setEnabled(enabled);
+    m_browseTargetButton->setEnabled(enabled);
+}
+
+void Application::connectUISignals()
+{
+    connect(m_browseSourceButton, &QToolButton::clicked,
+            this, &Application::browseSourceDirectoryRequested);
+    connect(m_browseTargetButton, &QToolButton::clicked,
+            this, &Application::browseTargetDirectoryRequested);
+    connect(m_startButton, &QPushButton::clicked,
+            this, &Application::startProcessing);
+    connect(m_pauseButton, &QToolButton::clicked,
+            this, &Application::pauseProcessing);
+    connect(m_cancelButton, &QToolButton::clicked,
+            this, &Application::cancelProcessing);
 }
