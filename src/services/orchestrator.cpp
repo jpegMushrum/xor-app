@@ -1,10 +1,11 @@
 #include "orchestrator.h"
 
 Orchestrator::Orchestrator(
-    FileSearchService *searchService,
-    FileProcessingService *processingService,
-    FileProcessor *fileProcessor)
-    : m_searchService(searchService),
+    IFileSearchService *searchService,
+    IFileProcessingService *processingService,
+    FileProcessor *fileProcessor,
+    QObject *parent)
+    : QObject(parent), m_searchService(searchService),
       m_processingService(processingService),
       m_fileProcessor(fileProcessor)
 {

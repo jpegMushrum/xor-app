@@ -9,8 +9,10 @@
 // Сервис для обработки файлов с XOR маской
 class FileProcessingService : public IFileProcessingService
 {
+    Q_OBJECT
+
 public:
-    FileProcessingService() = default;
+    explicit FileProcessingService(QObject *parent = nullptr);
     ~FileProcessingService() override = default;
 
     // Обработать файл с применением XOR маски

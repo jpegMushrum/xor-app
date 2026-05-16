@@ -9,8 +9,10 @@
 // Сервис для поиска файлов - составляет маппу для обработки
 class FileSearchService : public IFileSearchService
 {
+    Q_OBJECT
+
 public:
-    FileSearchService() = default;
+    explicit FileSearchService(QObject *parent = nullptr);
     ~FileSearchService() override = default;
 
     // Выполнить поиск файлов по маске

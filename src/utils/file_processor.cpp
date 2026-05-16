@@ -1,5 +1,9 @@
 #include "file_processor.h"
 
+FileProcessor::FileProcessor(QObject *parent): QObject(parent)
+{
+}
+
 bool FileProcessor::fileExists(const QString &filePath) const
 {
     return false;

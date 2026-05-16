@@ -1,15 +1,19 @@
 #ifndef IFILE_PROCESSING_SERVICE_H
 #define IFILE_PROCESSING_SERVICE_H
 
+#include <QObject>
 #include <QString>
 #include <vector>
 #include <cstdint>
 
 // Интерфейс для сервиса обработки файлов
-class IFileProcessingService
+class IFileProcessingService : public QObject
 {
+    Q_OBJECT
+
 public:
-    virtual ~IFileProcessingService() = default;
+    explicit IFileProcessingService(QObject *parent = nullptr) : QObject(parent) {}
+    virtual ~IFileProcessingService() override = default;
 
     // Обработать файл с применением XOR маски
     virtual bool processFile(

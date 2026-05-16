@@ -16,6 +16,12 @@
 #include <QApplication>
 #include <QResource>
 #include <QDirIterator>
+#include <QThread>
+
+#include "services/orchestrator.h"
+#include "services/file_processing_service.h"
+#include "services/file_search_service.h"
+#include "utils/file_processor.h"
 
 Application::Application(QWidget *parent)
     : QMainWindow(parent), m_controller(nullptr)
@@ -23,6 +29,7 @@ Application::Application(QWidget *parent)
     setUi();
     setStyle();
     connectUISignals();
+    setDependencies();
     setController();
 }
 
@@ -170,6 +177,25 @@ void Application::setStyle()
         qApp->setStyleSheet(style);
         styleFile.close();
     }
+}
+
+void Application::setDependencies()
+{
+    m_workerThread = new QThread(this);
+
+    m_processingService = new FileProcessingService();
+    m_searchService = new FileSearchService();
+    m_fileProcessor = new FileProcessor();
+
+    m_processingService->moveToThread(m_workerThread);
+    m_searchService->moveToThread(m_workerThread);
+    m_fileProcessor->moveToThread(m_workerThread);
+
+    connect(m_workerThread, &QThread::finished, m_processingService, &QObject::deleteLater);
+    connect(m_workerThread, &QThread::finished, m_searchService, &QObject::deleteLater);
+    connect(m_workerThread, &QThread::finished, m_fileProcessor, &QObject::deleteLater);
+
+    m_orchestrator = new Orchestrator(m_searchService, m_processingService, m_fileProcessor, this);
 }
 
 void Application::setController()

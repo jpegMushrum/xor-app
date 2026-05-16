@@ -4,19 +4,24 @@
 #include <QString>
 #include <unordered_map>
 #include <string>
+#include <QObject>
 
-class FileSearchService;
-class FileProcessingService;
+class IFileProcessingService;
+class IFileSearchService;
 class FileProcessor;
 
 // Оркестратор - управляет процессом обработки файлов
-class Orchestrator
+class Orchestrator: public QObject
 {
+    Q_OBJECT
+
 public:
     explicit Orchestrator(
-        FileSearchService *searchService,
-        FileProcessingService *processingService,
-        FileProcessor *fileProcessor);
+        IFileSearchService *searchService,
+        IFileProcessingService *processingService,
+        FileProcessor *fileProcessor,
+        QObject *parent = nullptr);
+
     ~Orchestrator() = default;
 
     // Проверить корректность параметров
@@ -48,8 +53,8 @@ private:
     void processFilesSequentially(
         const std::unordered_map<std::string, std::string> &fileMapping);
 
-    FileSearchService *m_searchService;
-    FileProcessingService *m_processingService;
+    IFileSearchService *m_searchService;
+    IFileProcessingService *m_processingService;
     FileProcessor *m_fileProcessor;
     QString m_validationErrors;
     bool m_isProcessing = false;

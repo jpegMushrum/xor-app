@@ -1,5 +1,10 @@
 #include "file_processing_service.h"
 
+FileProcessingService::FileProcessingService(QObject *parent)
+    : IFileProcessingService(parent)
+{
+}
+
 bool FileProcessingService::processFile(
     const QString &sourceFile,
     const std::vector<uint8_t> &xorMask,

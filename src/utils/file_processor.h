@@ -2,12 +2,15 @@
 #define FILE_PROCESSOR_H
 
 #include <QString>
+#include <QObject>
 
 // Обработка файлов - изменение/удаление исходного и запись в результирующий
-class FileProcessor
+class FileProcessor : public QObject
 {
+    Q_OBJECT
+
 public:
-    FileProcessor() = default;
+    explicit FileProcessor(QObject *parent = nullptr);
     ~FileProcessor() = default;
 
     // Проверить существование файла

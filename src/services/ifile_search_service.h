@@ -1,15 +1,19 @@
 #ifndef IFILE_SEARCH_SERVICE_H
 #define IFILE_SEARCH_SERVICE_H
 
+#include <QObject>
 #include <QString>
 #include <unordered_map>
 #include <string>
 
 // Интерфейс для сервиса поиска файлов
-class IFileSearchService
+class IFileSearchService : public QObject
 {
+    Q_OBJECT
+
 public:
-    virtual ~IFileSearchService() = default;
+    explicit IFileSearchService(QObject *parent = nullptr) : QObject(parent) {}
+    virtual ~IFileSearchService() override = default;
 
     // Выполнить поиск файлов по маске
     // Возвращает мапу (исходный файл -> результирующий файл)

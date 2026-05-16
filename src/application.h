@@ -18,6 +18,11 @@ class QPushButton;
 class QToolButton;
 class QStatusBar;
 class MainWindowController;
+class IFileSearchService;
+class IFileProcessingService;
+class FileProcessor;
+class Orchestrator;
+class QThread;
 
 class Application : public QMainWindow
 {
@@ -60,6 +65,9 @@ public:
     // Включить/отключить кнопки выбора папок
     void setBrowseButtonsEnabled(bool enabled);
 
+    // Получить оркестратор
+    Orchestrator *getOrchestrator() const;
+
 signals:
     // Сигналы для контроллера
     void browseSourceDirectoryRequested();
@@ -71,10 +79,16 @@ signals:
 private:
     void setUi();
     void setController();
+    void setDependencies();
     void setStyle();
-
-    // Подключить сигналы и слоты
     void connectUISignals();
+
+    // Зависимости
+    QThread *m_workerThread;
+    IFileSearchService *m_searchService;
+    IFileProcessingService *m_processingService;
+    FileProcessor *m_fileProcessor;
+    Orchestrator *m_orchestrator;
 
     // Виджеты
     QLineEdit *m_filesMask;
