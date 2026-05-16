@@ -24,7 +24,9 @@
 #include "utils/file_processor.h"
 
 Application::Application(QWidget *parent)
-    : QMainWindow(parent), m_controller(nullptr)
+    : QMainWindow(parent), m_controller(nullptr), m_workerThread(nullptr),
+      m_searchService(nullptr), m_processingService(nullptr),
+      m_fileProcessor(nullptr), m_orchestrator(nullptr)
 {
     setUi();
     setStyle();
@@ -301,6 +303,11 @@ void Application::setBrowseButtonsEnabled(bool enabled)
 {
     m_browseSourceButton->setEnabled(enabled);
     m_browseTargetButton->setEnabled(enabled);
+}
+
+Orchestrator *Application::getOrchestrator() const
+{
+    return m_orchestrator;
 }
 
 void Application::connectUISignals()

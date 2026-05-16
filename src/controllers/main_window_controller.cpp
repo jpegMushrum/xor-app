@@ -3,6 +3,7 @@
 #include "../services/orchestrator.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QDebug>
 
 MainWindowController::MainWindowController(Application *mainWindow, QObject *parent)
     : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr), m_currentState(WorkingState::Idle)
@@ -15,6 +16,9 @@ MainWindowController::~MainWindowController()
 
 void MainWindowController::initialize()
 {
+    m_orchestrator = m_mainWindow->getOrchestrator();
+
+    // Подключить сигналы от UI
     connect(m_mainWindow, &Application::browseSourceDirectoryRequested,
             this, &MainWindowController::onBrowseSourceDirectory);
     connect(m_mainWindow, &Application::browseTargetDirectoryRequested,
@@ -25,6 +29,28 @@ void MainWindowController::initialize()
             this, &MainWindowController::onPauseButtonClicked);
     connect(m_mainWindow, &Application::cancelProcessing,
             this, &MainWindowController::onCancelButtonClicked);
+
+    // Подключить сигналы от оркестратора
+    if (m_orchestrator)
+    {
+        connect(m_orchestrator, &Orchestrator::processingStarted,
+                this, [this]()
+                {
+                    m_currentState = WorkingState::Running;
+                    m_mainWindow->updateStatusBar(m_currentState);
+        });
+        connect(m_orchestrator, &Orchestrator::filesMapped,
+                this, [this](int fileCount)
+                { qDebug() << "Files mapped:" << fileCount; });
+        connect(m_orchestrator, &Orchestrator::processingFinished,
+                this, [this]()
+                {
+                    m_currentState = WorkingState::Idle;
+                    m_mainWindow->updateStatusBar(m_currentState);
+        });
+        connect(m_orchestrator, &Orchestrator::processingError,
+                this, &MainWindowController::showValidationError);
+    }
 
     m_mainWindow->updateStatusBar(m_currentState);
 }
@@ -44,9 +70,17 @@ void MainWindowController::onStartButtonClicked()
     }
     else
     {
-        m_currentState = WorkingState::Running;
-        m_mainWindow->updateStatusBar(m_currentState);
-        // TODO: запустить асинхронную обработку через Orchestrator
+        // Установить параметры поиска в оркестратор
+        if (m_orchestrator)
+        {
+            m_orchestrator->setSearchParameters(
+                m_mainWindow->getSourceDirectory(),
+                m_mainWindow->getTargetDirectory(),
+                m_mainWindow->getFileMask());
+
+            // Запустить обработку
+            m_orchestrator->startProcessing();
+        }
     }
 }
 
@@ -125,7 +159,8 @@ bool MainWindowController::validateInputs()
         errorMessages += "\nУкажите маску файлов";
     }
 
-    if (!errorMessages.isEmpty()) {
+    if (!errorMessages.isEmpty())
+    {
         showValidationError(errorMessages);
         return false;
     }

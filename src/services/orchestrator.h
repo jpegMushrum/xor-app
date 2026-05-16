@@ -11,7 +11,7 @@ class IFileSearchService;
 class FileProcessor;
 
 // Оркестратор - управляет процессом обработки файлов
-class Orchestrator: public QObject
+class Orchestrator : public QObject
 {
     Q_OBJECT
 
@@ -23,6 +23,12 @@ public:
         QObject *parent = nullptr);
 
     ~Orchestrator() = default;
+
+    // Установить параметры поиска
+    void setSearchParameters(
+        const QString &sourceDirectory,
+        const QString &resultDirectory,
+        const QString &fileMask);
 
     // Проверить корректность параметров
     bool validateParameters();
@@ -48,10 +54,23 @@ public:
     // Проверить, выполняется ли процесс
     bool isProcessing() const;
 
+signals:
+    // Сигналы для UI
+    void processingStarted();
+    void filesMapped(int fileCount);
+    void processingProgress(int current, int total);
+    void processingFinished();
+    void processingError(const QString &error);
+
 private:
     // Обработать файлы последовательно
     void processFilesSequentially(
         const std::unordered_map<std::string, std::string> &fileMapping);
+
+    // Параметры поиска
+    QString m_sourceDirectory;
+    QString m_resultDirectory;
+    QString m_fileMask;
 
     IFileSearchService *m_searchService;
     IFileProcessingService *m_processingService;
