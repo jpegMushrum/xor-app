@@ -2,9 +2,8 @@
 #define ORCHESTRATOR_H
 
 #include <QString>
-#include <unordered_map>
-#include <string>
 #include <QObject>
+#include "../utils/structures.h"
 
 class IFileProcessingService;
 class IFileSearchService;
@@ -28,7 +27,9 @@ public:
     void setSearchParameters(
         const QString &sourceDirectory,
         const QString &resultDirectory,
-        const QString &fileMask);
+        const QString &fileMask,
+        FileDuplicationRule duplicationRule,
+        const QVector<quint8> &xorMask);
 
     // Проверить корректность параметров
     bool validateParameters();
@@ -37,7 +38,7 @@ public:
     QString getValidationErrors() const;
 
     // Запустить процесс обработки файлов
-    bool startProcessing();
+    void startProcessing();
 
     // Остановить процесс (пауза)
     void pauseProcessing();
@@ -62,21 +63,45 @@ signals:
     void processingFinished();
     void processingError(const QString &error);
 
-private:
-    // Обработать файлы последовательно
-    void processFilesSequentially(
-        const std::unordered_map<std::string, std::string> &fileMapping);
+    // Сигналы для сервисов
+    void startSearchFiles(const QString &sourceDirectory,
+                          const QString &resultDirectory,
+                          const QString &fileMask,
+                          FileDuplicationRule duplicationRule);
 
-    // Параметры поиска
+    void startProcessingFile(
+        const QString &sourceFile,
+        const QVector<quint8> &xorMask,
+        const QString &tempFile);
+
+private slots:
+    void onSearchError(const QString& error);
+    void onFilesFound(const QVector<FileTask>& tasks);
+    void onProcessingError(const QString& error);
+    void onFileProcessed(const QString& resultFile);
+
+private:
+    // Обработать следующий файл
+    void processNextFile();
+
+    // Параметры запуска
     QString m_sourceDirectory;
     QString m_resultDirectory;
     QString m_fileMask;
+    FileDuplicationRule m_duplicationRule = FileDuplicationRule::Overwrite;
+    QVector<quint8> m_xorMask;
 
     IFileSearchService *m_searchService;
     IFileProcessingService *m_processingService;
     FileProcessor *m_fileProcessor;
+
     QString m_validationErrors;
-    bool m_isProcessing = false;
+    WorkingState m_workingState = WorkingState::Idle;
+
+    QVector<FileTask> m_tasks;
+    int m_currentTaskIndex = 0;
+    FileTask m_currentTask;
+    QString m_currentTempFile;
 };
 
 #endif // ORCHESTRATOR_H

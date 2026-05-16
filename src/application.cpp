@@ -136,10 +136,10 @@ void Application::setUi()
     editMaskLabel->setText("8-байтная маска:");
     fifthRowLayout->addWidget(editMaskLabel);
 
-    m_editMask = new QLineEdit(central);
-    m_editMask->setPlaceholderText("FFFFFFFF");
-    m_editMask->setMaximumWidth(100);
-    fifthRowLayout->addWidget(m_editMask);
+    m_xorMask = new QLineEdit(central);
+    m_xorMask->setPlaceholderText("0123456789ABCDEF");
+    m_xorMask->setMaximumWidth(100);
+    fifthRowLayout->addWidget(m_xorMask);
 
     fifthRowLayout->addStretch();
 
@@ -203,7 +203,7 @@ void Application::setDependencies()
 void Application::setController()
 {
     m_controller = new MainWindowController(this, this);
-    m_controller->initialize();
+    m_controller->initialize(m_orchestrator);
 }
 
 Application::~Application()
@@ -218,6 +218,16 @@ QString Application::getSourceDirectory() const
 QString Application::getTargetDirectory() const
 {
     return m_targetDir->text();
+}
+
+QString Application::getDuplicationRule() const
+{
+    return m_similarFilesCombo->currentText();
+}
+
+QString Application::getXorMask() const
+{
+    return m_xorMask->text();
 }
 
 QString Application::getFileMask() const
@@ -303,11 +313,6 @@ void Application::setBrowseButtonsEnabled(bool enabled)
 {
     m_browseSourceButton->setEnabled(enabled);
     m_browseTargetButton->setEnabled(enabled);
-}
-
-Orchestrator *Application::getOrchestrator() const
-{
-    return m_orchestrator;
 }
 
 void Application::connectUISignals()

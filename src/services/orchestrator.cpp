@@ -1,5 +1,7 @@
 #include "orchestrator.h"
 #include "ifile_search_service.h"
+#include "ifile_processing_service.h"
+#include "../utils/file_processor.h"
 #include <QDebug>
 
 Orchestrator::Orchestrator(
@@ -11,16 +13,29 @@ Orchestrator::Orchestrator(
       m_processingService(processingService),
       m_fileProcessor(fileProcessor)
 {
+    // Сигналы сервисов к слотам оркестратора
+    connect(m_searchService, &IFileSearchService::searchError, this, &Orchestrator::onSearchError);
+    connect(m_searchService, &IFileSearchService::filesFound, this, &Orchestrator::onFilesFound);
+    connect(m_processingService, &IFileProcessingService::fileProcessed, this, &Orchestrator::onFileProcessed);
+    connect(m_processingService, &IFileProcessingService::processingError, this, &Orchestrator::onProcessingError);
+
+    // Сигналы оркестратора к слотам сервисов
+    connect(this, &Orchestrator::startSearchFiles, m_searchService, &IFileSearchService::searchFiles);
+    connect(this, &Orchestrator::startProcessingFile, m_processingService, &IFileProcessingService::processFile);
 }
 
 void Orchestrator::setSearchParameters(
     const QString &sourceDirectory,
     const QString &resultDirectory,
-    const QString &fileMask)
+    const QString &fileMask,
+    FileDuplicationRule duplicationRule,
+    const QVector<quint8> &xorMask)
 {
     m_sourceDirectory = sourceDirectory;
     m_resultDirectory = resultDirectory;
     m_fileMask = fileMask;
+    m_duplicationRule = duplicationRule;
+    m_xorMask = xorMask;
 }
 
 bool Orchestrator::validateParameters()
@@ -45,9 +60,21 @@ bool Orchestrator::validateParameters()
         return false;
     }
 
+    if (m_xorMask.empty())
+    {
+        m_validationErrors = "XOR маска не установлена";
+        return false;
+    }
+
     if (!m_searchService)
     {
-        m_validationErrors = "Search Service не инициализирован";
+        m_validationErrors = "Search service не инициализирован";
+        return false;
+    }
+
+    if (!m_processingService)
+    {
+        m_validationErrors = "Processing service не инициализирован";
         return false;
     }
 
@@ -59,66 +86,153 @@ QString Orchestrator::getValidationErrors() const
     return m_validationErrors;
 }
 
-bool Orchestrator::startProcessing()
+void Orchestrator::startProcessing()
 {
+    if (m_workingState != WorkingState::Idle)
+    {
+        return;
+    }
+
     if (!validateParameters())
     {
         emit processingError(m_validationErrors);
-        return false;
+        return;
     }
 
-    m_isProcessing = true;
+    m_workingState = WorkingState::Running;
+
+    m_currentTaskIndex = 0;
+    m_tasks.clear();
+
     emit processingStarted();
 
-    // Поиск файлов
-    std::unordered_map<std::string, std::string> fileMapping =
-        m_searchService->searchFiles(m_sourceDirectory, m_resultDirectory, m_fileMask);
+    emit startSearchFiles(
+        m_sourceDirectory,
+        m_resultDirectory,
+        m_fileMask,
+        m_duplicationRule);
+}
 
-    qDebug() << "=== FOUND FILES ===";
-    qDebug() << "Total files:" << static_cast<int>(fileMapping.size());
+void Orchestrator::onSearchError(const QString &error)
+{
+    m_workingState = WorkingState::Cancelled;
 
-    for (const auto &pair : fileMapping)
+    emit processingError(error);
+}
+
+void Orchestrator::onFilesFound(const QVector<FileTask> &tasks)
+{
+    if (tasks.isEmpty())
     {
-        qDebug() << "Source:" << QString::fromStdString(pair.first);
-        qDebug() << "Target:" << QString::fromStdString(pair.second);
-        qDebug() << "---";
+        m_workingState = WorkingState::Cancelled;
+
+        emit processingError("Файлы не найдены");
+
+        return;
     }
 
-    emit filesMapped(static_cast<int>(fileMapping.size()));
+    m_tasks = tasks;
 
-    // TODO: Обработка файлов (когда будет реализован FileProcessingService и FileProcessor)
-    // processFilesSequentially(fileMapping);
+    emit filesMapped(m_tasks.size());
 
-    m_isProcessing = false;
-    emit processingFinished();
+    processNextFile();
+}
 
-    return true;
+void Orchestrator::processNextFile()
+{
+    if (m_workingState == WorkingState::Cancelled)
+    {
+        emit processingFinished();
+
+        return;
+    }
+
+    if (m_workingState == WorkingState::Paused)
+    {
+        return;
+    }
+
+    if (m_currentTaskIndex >= m_tasks.size())
+    {
+        m_workingState = WorkingState::Idle;
+
+        emit processingFinished();
+        return;
+    }
+
+    const FileTask &task = m_tasks[m_currentTaskIndex];
+    m_currentTask = task;
+
+    QString tempFile = m_fileProcessor->createTemporaryFile(task.source);
+
+    if (tempFile.isEmpty())
+    {
+        m_workingState = WorkingState::Cancelled;
+
+        emit processingError("Не удалось создать временный файл");
+        return;
+    }
+
+    m_currentTempFile = tempFile;
+
+    emit startProcessingFile(task.source, m_xorMask, tempFile);
+}
+
+void Orchestrator::onProcessingError(const QString &error)
+{
+    if (!m_currentTempFile.isEmpty())
+    {
+        m_fileProcessor->rollbackFile(
+            m_currentTempFile);
+
+        m_currentTempFile.clear();
+    }
+
+    m_workingState = WorkingState::Cancelled;
+    emit processingError(error);
+}
+
+void Orchestrator::onFileProcessed(const QString &tempFile)
+{
+    bool committed = m_fileProcessor->commitFile(tempFile, m_currentTask.target);
+
+    if (!committed)
+    {
+        m_fileProcessor->rollbackFile(tempFile);
+
+        m_workingState = WorkingState::Cancelled;
+
+        emit processingError("Не удалось сохранить результирующий файл");
+
+        return;
+    }
+
+    m_currentTaskIndex++;
+
+    emit processingProgress(m_currentTaskIndex, m_tasks.size());
+
+    m_currentTempFile.clear();
+    processNextFile();
 }
 
 void Orchestrator::pauseProcessing()
 {
+    // TODO
 }
 
 void Orchestrator::cancelProcessing()
 {
+    // TODO
 }
 
 bool Orchestrator::resumeProcessing()
 {
+    // TODO
     return false;
 }
 
 int Orchestrator::getProgress() const
 {
+    // TODO
     return 0;
-}
-
-bool Orchestrator::isProcessing() const
-{
-    return m_isProcessing;
-}
-
-void Orchestrator::processFilesSequentially(
-    const std::unordered_map<std::string, std::string> &fileMapping)
-{
 }

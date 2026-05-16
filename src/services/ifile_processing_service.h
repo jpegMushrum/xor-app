@@ -3,8 +3,6 @@
 
 #include <QObject>
 #include <QString>
-#include <vector>
-#include <cstdint>
 
 // Интерфейс для сервиса обработки файлов
 class IFileProcessingService : public QObject
@@ -15,24 +13,31 @@ public:
     explicit IFileProcessingService(QObject *parent = nullptr) : QObject(parent) {}
     virtual ~IFileProcessingService() override = default;
 
-    // Обработать файл с применением XOR маски
-    virtual bool processFile(
-        const QString &sourceFile,
-        const std::vector<uint8_t> &xorMask,
-        const QString &tempFile) = 0;
-
-    // Обработать файл с учетом оффсета (для продолжения процесса)
-    virtual bool processFileWithOffset(
-        const QString &sourceFile,
-        const std::vector<uint8_t> &xorMask,
-        const QString &tempFile,
-        qint64 offset) = 0;
-
     // Установить размер буфера для обработки
     virtual void setBufferSize(size_t bufferSize) = 0;
 
     // Получить текущий размер буфера
     virtual size_t bufferSize() const = 0;
+
+public slots:
+    // Обработать файл с применением XOR маски асинхронно
+    virtual void processFile(
+        const QString &sourceFile,
+        const QVector<quint8> &xorMask,
+        const QString &tempFile) = 0;
+
+    virtual void processFileWithOffset(
+        const QString &sourceFile,
+        const QVector<quint8> &xorMask,
+        const QString &tempFile,
+        qint64 offset) = 0;
+
+signals:
+    // Сигнал при успешной обработке файла
+    void fileProcessed(const QString &resultFile);
+
+    // Сигнал при ошибке обработки
+    void processingError(const QString &message);
 };
 
 #endif // IFILE_PROCESSING_SERVICE_H

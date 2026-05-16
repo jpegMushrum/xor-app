@@ -41,6 +41,12 @@ public:
     // Получить маску файлов
     QString getFileMask() const;
 
+    // Получить правило из выпадающего списка
+    QString getDuplicationRule() const;
+
+    // Получить xor-маску
+    QString getXorMask() const;
+
     // Получить состояние флага удаления исходных файлов
     bool isDeleteSourceFilesChecked() const;
 
@@ -64,9 +70,6 @@ public:
 
     // Включить/отключить кнопки выбора папок
     void setBrowseButtonsEnabled(bool enabled);
-
-    // Получить оркестратор
-    Orchestrator *getOrchestrator() const;
 
 signals:
     // Сигналы для контроллера
@@ -100,7 +103,7 @@ private:
     QComboBox *m_similarFilesCombo;
     QCheckBox *m_restartByTimerCheck;
     QLineEdit *m_timerSeconds;
-    QLineEdit *m_editMask;
+    QLineEdit *m_xorMask;
     QPushButton *m_startButton;
     QToolButton *m_pauseButton;
     QToolButton *m_cancelButton;

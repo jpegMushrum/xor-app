@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
+#include <QRegularExpression>
 
 MainWindowController::MainWindowController(Application *mainWindow, QObject *parent)
     : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr), m_currentState(WorkingState::Idle)
@@ -14,9 +15,14 @@ MainWindowController::~MainWindowController()
 {
 }
 
-void MainWindowController::initialize()
+void MainWindowController::initialize(Orchestrator *orchestrator)
 {
-    m_orchestrator = m_mainWindow->getOrchestrator();
+    if (!orchestrator) {
+        qWarning() << "nullptr orchestartor";
+        return;
+    }
+
+    m_orchestrator = orchestrator;
 
     // Подключить сигналы от UI
     connect(m_mainWindow, &Application::browseSourceDirectoryRequested,
@@ -69,10 +75,16 @@ void MainWindowController::onStartButtonClicked()
             m_currentState = WorkingState::Running;
             m_mainWindow->updateStatusBar(m_currentState);
 
+            FileDuplicationRule duplicationRule = parseDuplicationRule(m_mainWindow->getDuplicationRule());
+
+            QVector<quint8> xorMask = parseXorMask(m_mainWindow->getXorMask());
+
             m_orchestrator->setSearchParameters(
                 m_mainWindow->getSourceDirectory(),
                 m_mainWindow->getTargetDirectory(),
-                m_mainWindow->getFileMask());
+                m_mainWindow->getFileMask(),
+                duplicationRule,
+                xorMask);
 
             m_orchestrator->startProcessing();
         }
@@ -137,6 +149,8 @@ bool MainWindowController::validateInputs()
     QString sourceDir = m_mainWindow->getSourceDirectory();
     QString targetDir = m_mainWindow->getTargetDirectory();
     QString fileMask = m_mainWindow->getFileMask();
+    QString duplicationRule = m_mainWindow->getDuplicationRule();
+    QString xorMask = m_mainWindow->getXorMask();
     QString errorMessages = "";
 
     if (sourceDir.isEmpty())
@@ -154,6 +168,16 @@ bool MainWindowController::validateInputs()
         errorMessages += "\nУкажите маску файлов";
     }
 
+    if (!(duplicationRule == "Перезаписать" ||
+          duplicationRule == "Добавлять суффикс с номером" ||
+          duplicationRule == "Пропускать")) {
+        errorMessages += "\nУкажите политику повторяющихся файлов из списка";
+    }
+
+    if (!isValidXorMask(xorMask)) {
+        errorMessages += "\nXor-маска не валидна";
+    }
+
     if (!errorMessages.isEmpty())
     {
         showValidationError(errorMessages);
@@ -161,6 +185,62 @@ bool MainWindowController::validateInputs()
     }
 
     return true;
+}
+
+FileDuplicationRule MainWindowController::parseDuplicationRule(const QString &rule)
+{
+    if (rule == "Перезаписать")
+    {
+        return FileDuplicationRule::Overwrite;
+    }
+
+    if (rule == "Добавлять суффикс с номером")
+    {
+        return FileDuplicationRule::CreateCopy;
+    }
+
+    if (rule == "Пропускать")
+    {
+        return FileDuplicationRule::Skip;
+    }
+
+    throw std::runtime_error(QString("Unaccessible combo box value: " + rule).toStdString());
+}
+
+QVector<quint8> MainWindowController::parseXorMask(const QString &mask)
+{
+    QString normalized = mask.trimmed();
+    if (normalized.length() != 16)
+    {
+        throw std::runtime_error(QString("Unaccessible xor mask value: " + mask).toStdString());
+    }
+
+    QByteArray bytes =
+        QByteArray::fromHex(
+            normalized.toUtf8());
+
+    if (bytes.size() != 8)
+    {
+        throw std::runtime_error(QString("Unaccessible xor mask value: " + mask).toStdString());
+    }
+
+    QVector<quint8> result;
+    result.reserve(8);
+
+    for (char byte : bytes)
+    {
+        result.push_back(
+            static_cast<quint8>(byte));
+    }
+
+    return result;
+}
+
+bool MainWindowController::isValidXorMask(const QString &mask) const
+{
+    static const QRegularExpression regex("^[0-9A-Fa-f]{16}$");
+
+    return regex.match(mask).hasMatch();
 }
 
 void MainWindowController::showValidationError(const QString &message)

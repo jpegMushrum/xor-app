@@ -27,4 +27,11 @@ enum class WorkingState
     Cancelled
 };
 
+// Структура для сохранения задач (вместо мапы)
+struct FileTask
+{
+    QString source;
+    QString target;
+};
+
 #endif // STRUCTURES_H

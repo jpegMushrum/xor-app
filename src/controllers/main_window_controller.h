@@ -18,7 +18,7 @@ public:
     ~MainWindowController() override;
 
     // Инициализировать контроллер
-    void initialize();
+    void initialize(Orchestrator *orchestrator);
 
 private slots:
     // Обработать нажатие кнопки "Старт"
@@ -45,6 +45,15 @@ private:
 
     // Показать ошибку во время исполнения
     void showRuntimeError(const QString &message);
+
+    // Определить политику повторяющихся файлов
+    FileDuplicationRule parseDuplicationRule(const QString& rule);
+
+    // Распарсить xor-маску
+    QVector<quint8> parseXorMask(const QString& mask);
+
+    // Проверить, что xot-маска валидна
+    bool isValidXorMask(const QString &mask) const;
 
     Application *m_mainWindow;
     Orchestrator *m_orchestrator;
