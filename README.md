@@ -42,9 +42,10 @@
 
 ## Стек технологий
 
-* C++
+* C++, компилятор MinGW (gcc version 15.2.0)
 * Qt Widgets
 * CMake
+* Ninja
 
 ## Скриншоты
 

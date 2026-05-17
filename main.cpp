@@ -9,7 +9,3 @@ int main(int argc, char *argv[])
     w.show();
     return QCoreApplication::exec();
 }
-
-// TODO:
-// Остановка и отмена
-// Статус бар
