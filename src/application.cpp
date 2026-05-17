@@ -37,7 +37,7 @@ Application::Application(QWidget *parent)
 
 void Application::setUi()
 {
-    setFixedSize(600, 260);
+    setFixedSize(600, 280);
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
@@ -138,7 +138,7 @@ void Application::setUi()
 
     m_xorMask = new QLineEdit(central);
     m_xorMask->setPlaceholderText("0123456789ABCDEF");
-    m_xorMask->setMaximumWidth(100);
+    m_xorMask->setMaximumWidth(120);
     fifthRowLayout->addWidget(m_xorMask);
 
     fifthRowLayout->addStretch();

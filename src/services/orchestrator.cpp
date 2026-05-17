@@ -106,11 +106,7 @@ void Orchestrator::startProcessing()
 
     emit processingStarted();
 
-    emit startSearchFiles(
-        m_sourceDirectory,
-        m_resultDirectory,
-        m_fileMask,
-        m_duplicationRule);
+    emit startSearchFiles(m_sourceDirectory, m_resultDirectory, m_fileMask, m_duplicationRule);
 }
 
 void Orchestrator::onSearchError(const QString &error)

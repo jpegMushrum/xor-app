@@ -168,7 +168,7 @@ bool MainWindowController::validateInputs()
         errorMessages += "\nУкажите маску файлов";
     }
 
-    if (!(duplicationRule == "Перезаписать" ||
+    if (!(duplicationRule == "Перезаписывать" ||
           duplicationRule == "Добавлять суффикс с номером" ||
           duplicationRule == "Пропускать")) {
         errorMessages += "\nУкажите политику повторяющихся файлов из списка";
@@ -189,7 +189,7 @@ bool MainWindowController::validateInputs()
 
 FileDuplicationRule MainWindowController::parseDuplicationRule(const QString &rule)
 {
-    if (rule == "Перезаписать")
+    if (rule == "Перезаписывать")
     {
         return FileDuplicationRule::Overwrite;
     }
