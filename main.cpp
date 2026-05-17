@@ -9,9 +9,8 @@ int main(int argc, char *argv[])
     w.show();
     return QCoreApplication::exec();
 }
+
 // TODO:
-// Пофиксить WorkingState
-// Удаление исходных файлов
 // Работа по таймеру
 // Остановка и отмена
 // Статус бар

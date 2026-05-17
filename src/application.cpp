@@ -246,6 +246,18 @@ bool Application::isDeleteSourceFilesChecked() const
     return m_removeSourceFilesCheck->isChecked();
 }
 
+bool Application::isRestartByTimerChecked() const
+{
+    return m_restartByTimerCheck->isChecked();
+}
+
+int Application::getTimerSeconds() const
+{
+    bool ok = false;
+    int value = m_timerSeconds->text().toInt(&ok);
+    return ok ? value : 0;
+}
+
 void Application::setSourceDirectory(const QString &path)
 {
     m_sourceDir->setText(path);
@@ -294,6 +306,14 @@ void Application::updateStatusBar(WorkingState state)
         setPauseButtonEnabled(false);
         setCancelButtonEnabled(false);
         setBrowseButtonsEnabled(true);
+        break;
+    case WorkingState::OnTimer:
+        statusText = "Перезпуск по таймеру";
+        startButtonText = "Старт";
+        setStartButtonEnabled(false);
+        setPauseButtonEnabled(true);
+        setCancelButtonEnabled(true);
+        setBrowseButtonsEnabled(false);
         break;
     }
     m_statusBar->showMessage(statusText);

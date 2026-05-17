@@ -79,6 +79,11 @@ void MainWindowController::onStartButtonClicked()
             xorMask,
             m_mainWindow->isDeleteSourceFilesChecked());
 
+        // Установить параметры таймера перезапуска
+        m_orchestrator->setRestartTimer(
+            m_mainWindow->isRestartByTimerChecked(),
+            m_mainWindow->getTimerSeconds());
+
         m_orchestrator->startProcessing();
     }
 }

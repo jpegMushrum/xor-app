@@ -24,7 +24,8 @@ enum class WorkingState
     Idle,
     Running,
     Paused,
-    Cancelled
+    Cancelled,
+    OnTimer
 };
 
 // Структура для сохранения задач (вместо мапы)

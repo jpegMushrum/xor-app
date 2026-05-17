@@ -50,6 +50,12 @@ public:
     // Получить состояние флага удаления исходных файлов
     bool isDeleteSourceFilesChecked() const;
 
+    // Получить состояние флага работы по таймеру
+    bool isRestartByTimerChecked() const;
+
+    // Получить значение таймера в секундах
+    int getTimerSeconds() const;
+
     // Установить состояние исходной папки
     void setSourceDirectory(const QString &path);
 

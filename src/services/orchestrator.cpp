@@ -3,6 +3,7 @@
 #include "ifile_processing_service.h"
 #include "../utils/file_processor.h"
 #include <QDebug>
+#include <QTimer>
 
 Orchestrator::Orchestrator(
     IFileSearchService *searchService,
@@ -34,6 +35,10 @@ Orchestrator::Orchestrator(
     connect(this, &Orchestrator::createTemporaryFileRequested, m_fileProcessor, &FileProcessor::createTemporaryFile);
     connect(this, &Orchestrator::commitFileRequested, m_fileProcessor, &FileProcessor::commitFile);
     connect(this, &Orchestrator::rollbackFileRequested, m_fileProcessor, &FileProcessor::rollbackFile);
+
+    // Инициализировать таймер перезапуска
+    m_restartTimer = new QTimer(this);
+    connect(m_restartTimer, &QTimer::timeout, this, &Orchestrator::onTimerTimeout);
 }
 
 void Orchestrator::setSearchParameters(
@@ -102,6 +107,15 @@ QString Orchestrator::getValidationErrors() const
 
 void Orchestrator::startProcessing()
 {
+    if (m_workingState == WorkingState::OnTimer)
+    {
+        m_restartTimer->stop();
+
+        m_workingState = WorkingState::Idle;
+
+        emit workingStateChanged(m_workingState);
+    }
+
     if (m_workingState != WorkingState::Idle)
     {
         return;
@@ -169,10 +183,27 @@ void Orchestrator::processNextFile()
 
     if (m_currentTaskIndex >= m_tasks.size())
     {
-        m_workingState = WorkingState::Idle;
-        emit workingStateChanged(m_workingState);
+        qDebug() << "Processing completed";
 
         emit processingFinished();
+
+        if (m_restartByTimer && m_timerIntervalMs > 0)
+        {
+            m_workingState = WorkingState::OnTimer;
+
+            emit workingStateChanged(m_workingState);
+
+            qDebug() << "Next restart scheduled in" << (m_timerIntervalMs / 1000) << "seconds";
+
+            m_restartTimer->start(m_timerIntervalMs);
+        }
+        else
+        {
+            m_workingState = WorkingState::Idle;
+
+            emit workingStateChanged(m_workingState);
+        }
+
         return;
     }
 
@@ -266,4 +297,26 @@ void Orchestrator::onCommitFailed()
 void Orchestrator::onRollbackFinished()
 {
     // Откат завершен, ничего дополнительно не требуется
+}
+
+void Orchestrator::setRestartTimer(bool enabled, int seconds)
+{
+    m_restartByTimer = enabled;
+    m_timerIntervalMs = seconds * 1000;
+}
+
+void Orchestrator::onTimerTimeout()
+{
+    if (m_workingState != WorkingState::OnTimer)
+    {
+        return;
+    }
+
+    qDebug() << "Restart timer triggered";
+
+    m_workingState = WorkingState::Idle;
+
+    emit workingStateChanged(m_workingState);
+
+    startProcessing();
 }

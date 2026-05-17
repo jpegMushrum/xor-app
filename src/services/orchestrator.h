@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QObject>
+#include <QTimer>
 #include "../utils/structures.h"
 
 class IFileProcessingService;
@@ -31,6 +32,9 @@ public:
         FileDuplicationRule duplicationRule,
         const QVector<quint8> &xorMask,
         bool deleteSourceFiles = false);
+
+    // Установить параметры работы по таймеру
+    void setRestartTimer(bool enabled, int seconds);
 
     // Проверить корректность параметров
     bool validateParameters();
@@ -99,6 +103,9 @@ private slots:
     void onCommitFailed();
     void onRollbackFinished();
 
+    // Слот таймера перезапуска
+    void onTimerTimeout();
+
 private:
     // Обработать следующий файл
     void processNextFile();
@@ -116,12 +123,18 @@ private:
     FileProcessor *m_fileProcessor;
 
     QString m_validationErrors;
-    WorkingState m_workingState = WorkingState::Idle;
 
+    // Таски и рабочее состоянии
+    WorkingState m_workingState = WorkingState::Idle;
     QVector<FileTask> m_tasks;
     int m_currentTaskIndex = 0;
     FileTask m_currentTask;
     QString m_currentTempFile;
+
+    // Параметры работы по таймеру
+    QTimer *m_restartTimer = nullptr;
+    bool m_restartByTimer = false;
+    int m_timerIntervalMs = 0;
 };
 
 #endif // ORCHESTRATOR_H
