@@ -62,8 +62,8 @@ public:
     // Установить состояние папки результатов
     void setTargetDirectory(const QString &path);
 
-    // Обновить статус бар с состоянием работы
-    void updateStatusBar(WorkingState state);
+    // Обновить состояние приложения
+    void updateState(WorkingState state);
 
     // Включить/отключить кнопку старта
     void setStartButtonEnabled(bool enabled);
@@ -76,6 +76,12 @@ public:
 
     // Включить/отключить кнопки выбора папок
     void setBrowseButtonsEnabled(bool enabled);
+
+    // Обновить статус бар
+    void updateStatusBar(WorkingState state);
+
+    // Ограничить доступность полей для ввода
+    void setInputsEnabled(bool enabled);
 
 signals:
     // Сигналы для контроллера

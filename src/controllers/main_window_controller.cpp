@@ -46,7 +46,7 @@ void MainWindowController::initialize(Orchestrator *orchestrator)
 
         connect(m_orchestrator, &Orchestrator::workingStateChanged,
                 this, [this](WorkingState state)
-                { m_mainWindow->updateStatusBar(state); });
+                { m_mainWindow->updateState(state); });
 
         connect(m_orchestrator, &Orchestrator::processingError,
                 this, [this](const QString &msg)
@@ -57,7 +57,7 @@ void MainWindowController::initialize(Orchestrator *orchestrator)
                 { qDebug() << "Processing finished"; });
     }
 
-    m_mainWindow->updateStatusBar(WorkingState::Idle);
+    m_mainWindow->updateState(WorkingState::Idle);
 }
 
 void MainWindowController::onStartButtonClicked()

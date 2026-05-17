@@ -268,7 +268,7 @@ void Application::setTargetDirectory(const QString &path)
     m_targetDir->setText(path);
 }
 
-void Application::updateStatusBar(WorkingState state)
+void Application::updateState(WorkingState state)
 {
     QString statusText;
     QString startButtonText;
@@ -276,49 +276,102 @@ void Application::updateStatusBar(WorkingState state)
     switch (state)
     {
     case WorkingState::Idle:
+    {
         statusText = "";
         startButtonText = "Старт";
+
+        setInputsEnabled(true);
+
         setStartButtonEnabled(true);
         setPauseButtonEnabled(false);
         setCancelButtonEnabled(false);
-        setBrowseButtonsEnabled(true);
+
         break;
+    }
+
     case WorkingState::Running:
+    {
         statusText = "Обработка...";
         startButtonText = "Старт";
+
+        setInputsEnabled(false);
+
         setStartButtonEnabled(false);
         setPauseButtonEnabled(true);
         setCancelButtonEnabled(true);
-        setBrowseButtonsEnabled(false);
+
         break;
+    }
+
     case WorkingState::Paused:
+    {
         statusText = "Приостановлено";
         startButtonText = "Продолжить";
+
+        // UI полностью locked
+        setInputsEnabled(false);
+
         setStartButtonEnabled(true);
         setPauseButtonEnabled(false);
         setCancelButtonEnabled(true);
-        setBrowseButtonsEnabled(false);
+
         break;
+    }
+
     case WorkingState::Cancelled:
+    {
         statusText = "Отменено";
         startButtonText = "Старт";
+
+        setInputsEnabled(true);
+
         setStartButtonEnabled(true);
         setPauseButtonEnabled(false);
         setCancelButtonEnabled(false);
-        setBrowseButtonsEnabled(true);
+
         break;
+    }
+
     case WorkingState::OnTimer:
-        statusText = "Перезпуск по таймеру";
+    {
+        statusText = "Перезапуск по таймеру";
         startButtonText = "Старт";
-        setStartButtonEnabled(false);
-        setPauseButtonEnabled(true);
+
+        // Нельзя менять параметры между автозапусками
+        setInputsEnabled(false);
+
+        setStartButtonEnabled(true);
+        setPauseButtonEnabled(false);
         setCancelButtonEnabled(true);
-        setBrowseButtonsEnabled(false);
+
         break;
+    }
     }
 
     m_statusBar->showMessage(statusText);
     m_startButton->setText(startButtonText);
+}
+
+void Application::setInputsEnabled(bool enabled)
+{
+    m_filesMask->setEnabled(enabled);
+
+    m_sourceDir->setEnabled(enabled);
+    m_targetDir->setEnabled(enabled);
+
+    m_browseSourceButton->setEnabled(enabled);
+    m_browseTargetButton->setEnabled(enabled);
+
+    m_similarFilesCombo->setEnabled(enabled);
+
+    m_removeSourceFilesCheck->setEnabled(enabled);
+
+    m_restartByTimerCheck->setEnabled(enabled);
+
+    // timer seconds зависит ещё и от checkbox
+    m_timerSeconds->setEnabled(enabled && m_restartByTimerCheck->isChecked());
+
+    m_xorMask->setEnabled(enabled);
 }
 
 void Application::setStartButtonEnabled(bool enabled)
