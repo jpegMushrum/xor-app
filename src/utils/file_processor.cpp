@@ -15,15 +15,11 @@ bool FileProcessor::fileExists(const QString &filePath) const
     return QFileInfo::exists(filePath);
 }
 
-QString FileProcessor::createTemporaryFile(const QString &originalPath) const
+void FileProcessor::createTemporaryFile(const QString &originalPath)
 {
     QFileInfo fileInfo(originalPath);
 
-    QString tempTemplate =
-        QDir::tempPath() +
-        "/" +
-        fileInfo.completeBaseName() +
-        "_XXXXXX.tmp";
+    QString tempTemplate = QDir::tempPath() + "/" + fileInfo.completeBaseName() + "_XXXXXX.tmp";
 
     QTemporaryFile tempFile(tempTemplate);
 
@@ -31,10 +27,11 @@ QString FileProcessor::createTemporaryFile(const QString &originalPath) const
 
     if (!tempFile.open())
     {
-        return QString();
+        emit temporaryFileCreateFailed();
+        return;
     }
 
-    return tempFile.fileName();
+    emit temporaryFileCreated(tempFile.fileName());
 }
 
 bool FileProcessor::deleteFile(const QString &filePath)
@@ -86,34 +83,29 @@ bool FileProcessor::canReadFile(const QString &filePath) const
 {
     QFileInfo fileInfo(filePath);
 
-    return fileInfo.exists() &&
-           fileInfo.isFile() &&
-           fileInfo.isReadable();
+    return fileInfo.exists() && fileInfo.isFile() && fileInfo.isReadable();
 }
 
 bool FileProcessor::canWriteFile(const QString &filePath) const
 {
     QFileInfo fileInfo(filePath);
 
-    // Если файл существует
     if (fileInfo.exists())
     {
         return fileInfo.isWritable();
     }
 
-    // Если файла нет — проверяем директорию
     QFileInfo dirInfo(fileInfo.absolutePath());
 
-    return dirInfo.exists() &&
-           dirInfo.isDir() &&
-           dirInfo.isWritable();
+    return dirInfo.exists() && dirInfo.isDir() && dirInfo.isWritable();
 }
 
-bool FileProcessor::commitFile(const QString &tempFilePath, const QString &resultFilePath)
+void FileProcessor::commitFile(const QString &tempFilePath, const QString &resultFilePath)
 {
     if (!QFileInfo::exists(tempFilePath))
     {
-        return false;
+        emit commitFailed();
+        return;
     }
 
     // Удаляем target если уже существует
@@ -121,16 +113,25 @@ bool FileProcessor::commitFile(const QString &tempFilePath, const QString &resul
     {
         if (!QFile::remove(resultFilePath))
         {
-            return false;
+            emit commitFailed();
+            return;
         }
     }
 
     QFile tempFile(tempFilePath);
 
-    return tempFile.rename(resultFilePath);
+    if (tempFile.rename(resultFilePath))
+    {
+        emit commitFinished(resultFilePath);
+    }
+    else
+    {
+        emit commitFailed();
+    }
 }
 
-bool FileProcessor::rollbackFile(const QString &tempFilePath)
+void FileProcessor::rollbackFile(const QString &tempFilePath)
 {
-    return deleteFile(tempFilePath);
+    deleteFile(tempFilePath);
+    emit rollbackFinished();
 }

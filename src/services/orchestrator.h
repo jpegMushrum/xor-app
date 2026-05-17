@@ -75,10 +75,17 @@ signals:
         const QString &tempFile);
 
 private slots:
-    void onSearchError(const QString& error);
-    void onFilesFound(const QVector<FileTask>& tasks);
-    void onProcessingError(const QString& error);
-    void onFileProcessed(const QString& resultFile);
+    void onSearchError(const QString &error);
+    void onFilesFound(const QVector<FileTask> &tasks);
+    void onProcessingError(const QString &error);
+    void onFileProcessed(const QString &resultFile);
+
+    // Слоты для асинхронных операций FileProcessor
+    void onTemporaryFileCreated(const QString &tempFilePath);
+    void onTemporaryFileCreateFailed();
+    void onCommitFinished(const QString &resultFilePath);
+    void onCommitFailed();
+    void onRollbackFinished();
 
 private:
     // Обработать следующий файл

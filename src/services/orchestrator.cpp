@@ -19,6 +19,13 @@ Orchestrator::Orchestrator(
     connect(m_processingService, &IFileProcessingService::fileProcessed, this, &Orchestrator::onFileProcessed);
     connect(m_processingService, &IFileProcessingService::processingError, this, &Orchestrator::onProcessingError);
 
+    // Сигналы FileProcessor к слотам оркестратора
+    connect(m_fileProcessor, &FileProcessor::temporaryFileCreated, this, &Orchestrator::onTemporaryFileCreated);
+    connect(m_fileProcessor, &FileProcessor::temporaryFileCreateFailed, this, &Orchestrator::onTemporaryFileCreateFailed);
+    connect(m_fileProcessor, &FileProcessor::commitFinished, this, &Orchestrator::onCommitFinished);
+    connect(m_fileProcessor, &FileProcessor::commitFailed, this, &Orchestrator::onCommitFailed);
+    connect(m_fileProcessor, &FileProcessor::rollbackFinished, this, &Orchestrator::onRollbackFinished);
+
     // Сигналы оркестратора к слотам сервисов
     connect(this, &Orchestrator::startSearchFiles, m_searchService, &IFileSearchService::searchFiles);
     connect(this, &Orchestrator::startProcessingFile, m_processingService, &IFileProcessingService::processFile);
@@ -159,28 +166,16 @@ void Orchestrator::processNextFile()
     const FileTask &task = m_tasks[m_currentTaskIndex];
     m_currentTask = task;
 
-    QString tempFile = m_fileProcessor->createTemporaryFile(task.source);
-
-    if (tempFile.isEmpty())
-    {
-        m_workingState = WorkingState::Cancelled;
-
-        emit processingError("Не удалось создать временный файл");
-        return;
-    }
-
-    m_currentTempFile = tempFile;
-
-    emit startProcessingFile(task.source, m_xorMask, tempFile);
+    // Асинхронное создание временного файла
+    m_fileProcessor->createTemporaryFile(task.source);
 }
 
 void Orchestrator::onProcessingError(const QString &error)
 {
     if (!m_currentTempFile.isEmpty())
     {
-        m_fileProcessor->rollbackFile(
-            m_currentTempFile);
-
+        // Асинхронный откат временного файла
+        m_fileProcessor->rollbackFile(m_currentTempFile);
         m_currentTempFile.clear();
     }
 
@@ -190,25 +185,8 @@ void Orchestrator::onProcessingError(const QString &error)
 
 void Orchestrator::onFileProcessed(const QString &tempFile)
 {
-    bool committed = m_fileProcessor->commitFile(tempFile, m_currentTask.target);
-
-    if (!committed)
-    {
-        m_fileProcessor->rollbackFile(tempFile);
-
-        m_workingState = WorkingState::Cancelled;
-
-        emit processingError("Не удалось сохранить результирующий файл");
-
-        return;
-    }
-
-    m_currentTaskIndex++;
-
-    emit processingProgress(m_currentTaskIndex, m_tasks.size());
-
-    m_currentTempFile.clear();
-    processNextFile();
+    // Асинхронная фиксация результата
+    m_fileProcessor->commitFile(tempFile, m_currentTask.target);
 }
 
 void Orchestrator::pauseProcessing()
@@ -231,4 +209,42 @@ int Orchestrator::getProgress() const
 {
     // TODO
     return 0;
+}
+
+void Orchestrator::onTemporaryFileCreated(const QString &tempFilePath)
+{
+    m_currentTempFile = tempFilePath;
+    emit startProcessingFile(m_currentTask.source, m_xorMask, tempFilePath);
+}
+
+void Orchestrator::onTemporaryFileCreateFailed()
+{
+    m_workingState = WorkingState::Cancelled;
+    emit processingError("Не удалось создать временный файл");
+}
+
+void Orchestrator::onCommitFinished(const QString &resultFilePath)
+{
+    m_currentTaskIndex++;
+
+    emit processingProgress(m_currentTaskIndex, m_tasks.size());
+
+    m_currentTempFile.clear();
+    processNextFile();
+}
+
+void Orchestrator::onCommitFailed()
+{
+    if (!m_currentTempFile.isEmpty())
+    {
+        m_fileProcessor->rollbackFile(m_currentTempFile);
+    }
+
+    m_workingState = WorkingState::Cancelled;
+    emit processingError("Не удалось сохранить результирующий файл");
+}
+
+void Orchestrator::onRollbackFinished()
+{
+    // Откат завершен, ничего дополнительно не требуется
 }
