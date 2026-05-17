@@ -17,7 +17,8 @@ MainWindowController::~MainWindowController()
 
 void MainWindowController::initialize(Orchestrator *orchestrator)
 {
-    if (!orchestrator) {
+    if (!orchestrator)
+    {
         qWarning() << "nullptr orchestartor";
         return;
     }
@@ -44,19 +45,16 @@ void MainWindowController::initialize(Orchestrator *orchestrator)
                 { qDebug() << "Files mapped:" << fileCount; });
 
         connect(m_orchestrator, &Orchestrator::workingStateChanged,
-                this, [this](WorkingState state) {
-            m_mainWindow->updateStatusBar(state);
-        });
+                this, [this](WorkingState state)
+                { m_mainWindow->updateStatusBar(state); });
 
         connect(m_orchestrator, &Orchestrator::processingError,
-                this, [this](const QString& msg) {
-            showRuntimeError(msg);
-        });
+                this, [this](const QString &msg)
+                { showRuntimeError(msg); });
 
         connect(m_orchestrator, &Orchestrator::processingFinished,
-                this, [this]() {
-            qDebug() << "Processing finished";
-        });
+                this, [this]()
+                { qDebug() << "Processing finished"; });
     }
 
     m_mainWindow->updateStatusBar(WorkingState::Idle);
@@ -151,11 +149,13 @@ bool MainWindowController::validateInputs()
 
     if (!(duplicationRule == "Перезаписывать" ||
           duplicationRule == "Добавлять суффикс с номером" ||
-          duplicationRule == "Пропускать")) {
+          duplicationRule == "Пропускать"))
+    {
         errorMessages += "\nУкажите политику повторяющихся файлов из списка";
     }
 
-    if (!isValidXorMask(xorMask)) {
+    if (!isValidXorMask(xorMask))
+    {
         errorMessages += "\nXor-маска не валидна";
     }
 

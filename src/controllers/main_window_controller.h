@@ -47,10 +47,10 @@ private:
     void showRuntimeError(const QString &message);
 
     // Определить политику повторяющихся файлов
-    FileDuplicationRule parseDuplicationRule(const QString& rule);
+    FileDuplicationRule parseDuplicationRule(const QString &rule);
 
     // Распарсить xor-маску
-    QVector<quint8> parseXorMask(const QString& mask);
+    QVector<quint8> parseXorMask(const QString &mask);
 
     // Проверить, что xot-маска валидна
     bool isValidXorMask(const QString &mask) const;

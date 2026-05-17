@@ -29,6 +29,11 @@ Orchestrator::Orchestrator(
     // Сигналы оркестратора к слотам сервисов
     connect(this, &Orchestrator::startSearchFiles, m_searchService, &IFileSearchService::searchFiles);
     connect(this, &Orchestrator::startProcessingFile, m_processingService, &IFileProcessingService::processFile);
+
+    // Сигналы оркестратора к слотам FileProcessor
+    connect(this, &Orchestrator::createTemporaryFileRequested, m_fileProcessor, &FileProcessor::createTemporaryFile);
+    connect(this, &Orchestrator::commitFileRequested, m_fileProcessor, &FileProcessor::commitFile);
+    connect(this, &Orchestrator::rollbackFileRequested, m_fileProcessor, &FileProcessor::rollbackFile);
 }
 
 void Orchestrator::setSearchParameters(
@@ -174,14 +179,14 @@ void Orchestrator::processNextFile()
     const FileTask &task = m_tasks[m_currentTaskIndex];
     m_currentTask = task;
 
-    m_fileProcessor->createTemporaryFile(task.source);
+    emit createTemporaryFileRequested(task.source);
 }
 
 void Orchestrator::onProcessingError(const QString &error)
 {
     if (!m_currentTempFile.isEmpty())
     {
-        m_fileProcessor->rollbackFile(m_currentTempFile);
+        emit rollbackFileRequested(m_currentTempFile);
         m_currentTempFile.clear();
     }
 
@@ -192,7 +197,7 @@ void Orchestrator::onProcessingError(const QString &error)
 
 void Orchestrator::onFileProcessed(const QString &tempFile)
 {
-    m_fileProcessor->commitFile(tempFile, m_currentTask.target);
+    emit commitFileRequested(tempFile, m_currentTask.target);
 }
 
 void Orchestrator::pauseProcessing()
@@ -250,7 +255,7 @@ void Orchestrator::onCommitFailed()
 {
     if (!m_currentTempFile.isEmpty())
     {
-        m_fileProcessor->rollbackFile(m_currentTempFile);
+        emit rollbackFileRequested(m_currentTempFile);
     }
 
     m_workingState = WorkingState::Idle;

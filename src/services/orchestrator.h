@@ -76,6 +76,16 @@ signals:
         const QVector<quint8> &xorMask,
         const QString &tempFile);
 
+    // Сигналы для FileProcessor
+    void createTemporaryFileRequested(const QString &originalPath);
+
+    void commitFileRequested(
+        const QString &tempFilePath,
+        const QString &resultFilePath);
+
+    void rollbackFileRequested(
+        const QString &tempFilePath);
+
 private slots:
     void onSearchError(const QString &error);
     void onFilesFound(const QVector<FileTask> &tasks);
