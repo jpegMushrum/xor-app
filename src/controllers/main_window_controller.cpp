@@ -7,7 +7,7 @@
 #include <QRegularExpression>
 
 MainWindowController::MainWindowController(Application *mainWindow, QObject *parent)
-    : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr), m_currentState(WorkingState::Idle)
+    : QObject(parent), m_mainWindow(mainWindow), m_orchestrator(nullptr)
 {
 }
 
@@ -43,16 +43,23 @@ void MainWindowController::initialize(Orchestrator *orchestrator)
                 this, [this](int fileCount)
                 { qDebug() << "Files mapped:" << fileCount; });
 
+        connect(m_orchestrator, &Orchestrator::workingStateChanged,
+                this, [this](WorkingState state) {
+            m_mainWindow->updateStatusBar(state);
+        });
+
         connect(m_orchestrator, &Orchestrator::processingError,
                 this, [this](const QString& msg) {
-            m_currentState = WorkingState::Cancelled;
-            m_mainWindow->updateStatusBar(m_currentState);
-
             showRuntimeError(msg);
+        });
+
+        connect(m_orchestrator, &Orchestrator::processingFinished,
+                this, [this]() {
+            qDebug() << "Processing finished";
         });
     }
 
-    m_mainWindow->updateStatusBar(m_currentState);
+    m_mainWindow->updateStatusBar(WorkingState::Idle);
 }
 
 void MainWindowController::onStartButtonClicked()
@@ -60,60 +67,34 @@ void MainWindowController::onStartButtonClicked()
     if (!validateInputs())
         return;
 
-    if (m_currentState == WorkingState::Paused)
+    if (m_orchestrator)
     {
-        if (m_orchestrator && m_orchestrator->resumeProcessing())
-        {
-            m_currentState = WorkingState::Running;
-            m_mainWindow->updateStatusBar(m_currentState);
-        }
-    }
-    else
-    {
-        if (m_orchestrator)
-        {
-            m_currentState = WorkingState::Running;
-            m_mainWindow->updateStatusBar(m_currentState);
+        FileDuplicationRule duplicationRule = parseDuplicationRule(m_mainWindow->getDuplicationRule());
 
-            FileDuplicationRule duplicationRule = parseDuplicationRule(m_mainWindow->getDuplicationRule());
+        QVector<quint8> xorMask = parseXorMask(m_mainWindow->getXorMask());
 
-            QVector<quint8> xorMask = parseXorMask(m_mainWindow->getXorMask());
+        m_orchestrator->setSearchParameters(
+            m_mainWindow->getSourceDirectory(),
+            m_mainWindow->getTargetDirectory(),
+            m_mainWindow->getFileMask(),
+            duplicationRule,
+            xorMask,
+            m_mainWindow->isDeleteSourceFilesChecked());
 
-            m_orchestrator->setSearchParameters(
-                m_mainWindow->getSourceDirectory(),
-                m_mainWindow->getTargetDirectory(),
-                m_mainWindow->getFileMask(),
-                duplicationRule,
-                xorMask);
-
-            m_orchestrator->startProcessing();
-        }
+        m_orchestrator->startProcessing();
     }
 }
 
 void MainWindowController::onPauseButtonClicked()
 {
-    if (m_currentState == WorkingState::Running)
-    {
-        m_currentState = WorkingState::Paused;
-        m_mainWindow->updateStatusBar(m_currentState);
-        if (m_orchestrator)
-            m_orchestrator->pauseProcessing();
-    }
+    if (m_orchestrator)
+        m_orchestrator->pauseProcessing();
 }
 
 void MainWindowController::onCancelButtonClicked()
 {
-    if (m_currentState == WorkingState::Running || m_currentState == WorkingState::Paused)
-    {
-        m_currentState = WorkingState::Cancelled;
-        m_mainWindow->updateStatusBar(m_currentState);
-        if (m_orchestrator)
-            m_orchestrator->cancelProcessing();
-
-        m_currentState = WorkingState::Idle;
-        m_mainWindow->updateStatusBar(m_currentState);
-    }
+    if (m_orchestrator)
+        m_orchestrator->cancelProcessing();
 }
 
 void MainWindowController::onBrowseSourceDirectory()

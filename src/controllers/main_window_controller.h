@@ -57,7 +57,6 @@ private:
 
     Application *m_mainWindow;
     Orchestrator *m_orchestrator;
-    WorkingState m_currentState;
 };
 
 #endif // MAIN_WINDOW_CONTROLLER_H

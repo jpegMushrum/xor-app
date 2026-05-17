@@ -36,13 +36,15 @@ void Orchestrator::setSearchParameters(
     const QString &resultDirectory,
     const QString &fileMask,
     FileDuplicationRule duplicationRule,
-    const QVector<quint8> &xorMask)
+    const QVector<quint8> &xorMask,
+    bool deleteSourceFiles)
 {
     m_sourceDirectory = sourceDirectory;
     m_resultDirectory = resultDirectory;
     m_fileMask = fileMask;
     m_duplicationRule = duplicationRule;
     m_xorMask = xorMask;
+    m_deleteSourceFiles = deleteSourceFiles;
 }
 
 bool Orchestrator::validateParameters()
@@ -107,18 +109,21 @@ void Orchestrator::startProcessing()
     }
 
     m_workingState = WorkingState::Running;
+    emit workingStateChanged(m_workingState);
 
     m_currentTaskIndex = 0;
     m_tasks.clear();
 
     emit processingStarted();
 
+    qDebug() << "Orchestrator starting search" << m_sourceDirectory << m_resultDirectory << m_fileMask;
     emit startSearchFiles(m_sourceDirectory, m_resultDirectory, m_fileMask, m_duplicationRule);
 }
 
 void Orchestrator::onSearchError(const QString &error)
 {
-    m_workingState = WorkingState::Cancelled;
+    m_workingState = WorkingState::Idle;
+    emit workingStateChanged(m_workingState);
 
     emit processingError(error);
 }
@@ -127,7 +132,8 @@ void Orchestrator::onFilesFound(const QVector<FileTask> &tasks)
 {
     if (tasks.isEmpty())
     {
-        m_workingState = WorkingState::Cancelled;
+        m_workingState = WorkingState::Idle;
+        emit workingStateChanged(m_workingState);
 
         emit processingError("Файлы не найдены");
 
@@ -145,8 +151,9 @@ void Orchestrator::processNextFile()
 {
     if (m_workingState == WorkingState::Cancelled)
     {
+        m_workingState = WorkingState::Idle;
+        emit workingStateChanged(m_workingState);
         emit processingFinished();
-
         return;
     }
 
@@ -158,6 +165,7 @@ void Orchestrator::processNextFile()
     if (m_currentTaskIndex >= m_tasks.size())
     {
         m_workingState = WorkingState::Idle;
+        emit workingStateChanged(m_workingState);
 
         emit processingFinished();
         return;
@@ -166,7 +174,6 @@ void Orchestrator::processNextFile()
     const FileTask &task = m_tasks[m_currentTaskIndex];
     m_currentTask = task;
 
-    // Асинхронное создание временного файла
     m_fileProcessor->createTemporaryFile(task.source);
 }
 
@@ -174,18 +181,17 @@ void Orchestrator::onProcessingError(const QString &error)
 {
     if (!m_currentTempFile.isEmpty())
     {
-        // Асинхронный откат временного файла
         m_fileProcessor->rollbackFile(m_currentTempFile);
         m_currentTempFile.clear();
     }
 
-    m_workingState = WorkingState::Cancelled;
+    m_workingState = WorkingState::Idle;
+    emit workingStateChanged(m_workingState);
     emit processingError(error);
 }
 
 void Orchestrator::onFileProcessed(const QString &tempFile)
 {
-    // Асинхронная фиксация результата
     m_fileProcessor->commitFile(tempFile, m_currentTask.target);
 }
 
@@ -219,12 +225,19 @@ void Orchestrator::onTemporaryFileCreated(const QString &tempFilePath)
 
 void Orchestrator::onTemporaryFileCreateFailed()
 {
-    m_workingState = WorkingState::Cancelled;
+    m_workingState = WorkingState::Idle;
+    emit workingStateChanged(m_workingState);
     emit processingError("Не удалось создать временный файл");
 }
 
 void Orchestrator::onCommitFinished(const QString &resultFilePath)
 {
+    if (m_deleteSourceFiles && !m_currentTask.source.isEmpty() &&
+        !(m_duplicationRule == FileDuplicationRule::Overwrite && m_currentTask.source == m_currentTask.target)) // Чтобы не удалить результат
+    {
+        m_fileProcessor->deleteFile(m_currentTask.source);
+    }
+
     m_currentTaskIndex++;
 
     emit processingProgress(m_currentTaskIndex, m_tasks.size());
@@ -240,7 +253,8 @@ void Orchestrator::onCommitFailed()
         m_fileProcessor->rollbackFile(m_currentTempFile);
     }
 
-    m_workingState = WorkingState::Cancelled;
+    m_workingState = WorkingState::Idle;
+    emit workingStateChanged(m_workingState);
     emit processingError("Не удалось сохранить результирующий файл");
 }
 

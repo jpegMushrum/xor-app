@@ -10,7 +10,6 @@ int main(int argc, char *argv[])
     return QCoreApplication::exec();
 }
 // TODO:
-// Асинхронный вызов file processor
 // Пофиксить WorkingState
 // Удаление исходных файлов
 // Работа по таймеру

@@ -29,7 +29,8 @@ public:
         const QString &resultDirectory,
         const QString &fileMask,
         FileDuplicationRule duplicationRule,
-        const QVector<quint8> &xorMask);
+        const QVector<quint8> &xorMask,
+        bool deleteSourceFiles = false);
 
     // Проверить корректность параметров
     bool validateParameters();
@@ -62,6 +63,7 @@ signals:
     void processingProgress(int current, int total);
     void processingFinished();
     void processingError(const QString &error);
+    void workingStateChanged(WorkingState state);
 
     // Сигналы для сервисов
     void startSearchFiles(const QString &sourceDirectory,
@@ -97,6 +99,7 @@ private:
     QString m_fileMask;
     FileDuplicationRule m_duplicationRule = FileDuplicationRule::Overwrite;
     QVector<quint8> m_xorMask;
+    bool m_deleteSourceFiles = false;
 
     IFileSearchService *m_searchService;
     IFileProcessingService *m_processingService;
