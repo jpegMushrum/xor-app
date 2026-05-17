@@ -12,7 +12,7 @@ qt_add_executable(xor-app
     main.cpp
     src/application.cpp src/application.h
     src/utils/structures.h
-    src/utils/app_state.h src/utils/app_state.cpp
+
     src/utils/file_processor.h src/utils/file_processor.cpp
     src/services/ifile_search_service.h
     src/services/ifile_processing_service.h

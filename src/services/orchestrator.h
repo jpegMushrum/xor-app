@@ -67,10 +67,12 @@ signals:
     // Сигналы для UI
     void processingStarted();
     void filesMapped(int fileCount);
-    void processingProgress(int current, int total);
     void processingFinished();
     void processingError(const QString &error);
     void workingStateChanged(WorkingState state);
+
+    // Для прогресс бара
+    void processingProgress(int current, int total, const QString& currentFile);
 
     // Сигналы для сервисов
     void startSearchFiles(const QString &sourceDirectory,
@@ -86,12 +88,9 @@ signals:
     // Сигналы для FileProcessor
     void createTemporaryFileRequested(const QString &originalPath);
 
-    void commitFileRequested(
-        const QString &tempFilePath,
-        const QString &resultFilePath);
+    void commitFileRequested(const QString &tempFilePath, const QString &resultFilePath);
 
-    void rollbackFileRequested(
-        const QString &tempFilePath);
+    void rollbackFileRequested(const QString &tempFilePath);
 
 private slots:
     void onSearchError(const QString &error);

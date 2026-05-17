@@ -57,6 +57,11 @@ void MainWindowController::initialize(Orchestrator *orchestrator)
                 { qDebug() << "Processing finished"; });
     }
 
+    // Подключаем прогресс бар
+    connect(m_orchestrator, &Orchestrator::processingProgress,
+        this, [this](int current, int total, const QString& file)
+        { m_mainWindow->updateProgress(current,total,file); } );
+
     m_mainWindow->updateState(WorkingState::Idle);
 }
 

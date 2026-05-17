@@ -4,6 +4,7 @@
 #include "../utils/file_processor.h"
 #include <QDebug>
 #include <QTimer>
+#include <QFileInfo>
 
 Orchestrator::Orchestrator(
     IFileSearchService *searchService,
@@ -210,6 +211,7 @@ void Orchestrator::processNextFile()
     const FileTask &task = m_tasks[m_currentTaskIndex];
     m_currentTask = task;
 
+    emit processingProgress(m_currentTaskIndex, m_tasks.size(), QFileInfo(task.source).fileName());
     emit createTemporaryFileRequested(task.source);
 }
 
@@ -336,7 +338,7 @@ void Orchestrator::onCommitFinished(const QString &resultFilePath)
 
     m_currentTaskIndex++;
 
-    emit processingProgress(m_currentTaskIndex, m_tasks.size());
+    emit processingProgress(m_currentTaskIndex, m_tasks.size(), QFileInfo(resultFilePath).fileName());
 
     m_currentTempFile.clear();
     processNextFile();

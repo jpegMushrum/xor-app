@@ -23,6 +23,8 @@ class IFileProcessingService;
 class FileProcessor;
 class Orchestrator;
 class QThread;
+class QProgressBar;
+class QLabel;
 
 class Application : public QMainWindow
 {
@@ -83,6 +85,9 @@ public:
     // Ограничить доступность полей для ввода
     void setInputsEnabled(bool enabled);
 
+    // Отобразить текущий прогресс
+    void updateProgress(int current, int total, const QString& filename);
+
 signals:
     // Сигналы для контроллера
     void browseSourceDirectoryRequested();
@@ -119,7 +124,8 @@ private:
     QPushButton *m_startButton;
     QToolButton *m_pauseButton;
     QToolButton *m_cancelButton;
-    QStatusBar *m_statusBar;
+    QProgressBar *m_progressBar;
+    QLabel *m_progressLabel;
 
     MainWindowController *m_controller;
 };

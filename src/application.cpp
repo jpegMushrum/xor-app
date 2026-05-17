@@ -11,12 +11,12 @@
 #include <QStyle>
 #include <QComboBox>
 #include <QPushButton>
-#include <QStatusBar>
 #include <QFile>
 #include <QApplication>
 #include <QResource>
 #include <QDirIterator>
 #include <QThread>
+#include <QProgressBar>
 
 #include "services/orchestrator.h"
 #include "services/file_processing_service.h"
@@ -153,9 +153,20 @@ void Application::setUi()
     QHBoxLayout *sixthRowLayout = new QHBoxLayout();
     sixthRowLayout->setSpacing(3);
 
-    m_statusBar = new QStatusBar(central);
-    m_statusBar->setSizeGripEnabled(false);
-    sixthRowLayout->addWidget(m_statusBar);
+    QHBoxLayout *progressLayout = new QHBoxLayout();
+    progressLayout->setSpacing(5);
+
+    m_progressLabel = new QLabel(central);
+    m_progressLabel->setText("Нет активной обработки");
+    progressLayout->addWidget(m_progressLabel);
+
+    m_progressBar = new QProgressBar(central);
+    m_progressBar->setMinimum(0);
+    m_progressBar->setMaximum(100);
+    m_progressBar->setValue(0);
+
+    progressLayout->addWidget(m_progressBar);
+    sixthRowLayout->addLayout(progressLayout);
 
     m_pauseButton = new QToolButton(central);
     m_pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
@@ -348,7 +359,7 @@ void Application::updateState(WorkingState state)
     }
     }
 
-    m_statusBar->showMessage(statusText);
+    m_progressLabel->setText(statusText);
     m_startButton->setText(startButtonText);
 }
 
@@ -393,6 +404,27 @@ void Application::setBrowseButtonsEnabled(bool enabled)
 {
     m_browseSourceButton->setEnabled(enabled);
     m_browseTargetButton->setEnabled(enabled);
+}
+
+void Application::updateProgress(
+    int current,
+    int total,
+    const QString& filename)
+{
+    if (total <= 0)
+    {
+        m_progressBar->setValue(0);
+        m_progressLabel->setText("Нет файлов");
+        return;
+    }
+
+    int percent = static_cast<int>(
+        (static_cast<double>(current) / total) * 100.0
+        );
+
+    m_progressBar->setValue(percent);
+
+    m_progressLabel->setText(QString("%1 / %2 : %3").arg(current).arg(total).arg(filename));
 }
 
 void Application::connectUISignals()
