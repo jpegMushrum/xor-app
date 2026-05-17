@@ -25,6 +25,7 @@ class Orchestrator;
 class QThread;
 class QProgressBar;
 class QLabel;
+class QCloseEvent;
 
 class Application : public QMainWindow
 {
@@ -102,6 +103,9 @@ private:
     void setDependencies();
     void setStyle();
     void connectUISignals();
+
+    // Обработка правильного завершения программы
+    void closeEvent(QCloseEvent *event) override;
 
     // Зависимости
     QThread *m_workerThread;

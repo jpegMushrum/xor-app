@@ -17,6 +17,7 @@
 #include <QDirIterator>
 #include <QThread>
 #include <QProgressBar>
+#include <QCloseEvent>
 
 #include "services/orchestrator.h"
 #include "services/file_processing_service.h"
@@ -437,4 +438,34 @@ void Application::connectUISignals()
             this, &Application::pauseProcessing);
     connect(m_cancelButton, &QToolButton::clicked,
             this, &Application::cancelProcessing);
+}
+
+void Application::closeEvent(QCloseEvent *event)
+{
+    if (!m_orchestrator)
+    {
+        event->accept();
+        return;
+    }
+
+    WorkingState state = m_orchestrator->getWorkingState();
+
+    switch (state)
+    {
+    case WorkingState::Running:
+    case WorkingState::Paused:
+    case WorkingState::OnTimer:
+    {
+        m_orchestrator->cancelProcessing();
+        break;
+    }
+
+    case WorkingState::Idle:
+    case WorkingState::Cancelled:
+    {
+        break;
+    }
+    }
+
+    event->accept();
 }
