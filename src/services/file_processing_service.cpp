@@ -22,6 +22,12 @@ void FileProcessingService::processFileWithOffset(
     const QString &tempFile,
     qint64 offset)
 {
+    {
+        QMutexLocker lock(&m_mutex);
+
+        m_state = ServiceState::Running;
+    }
+
     if (xorMask.empty())
     {
         qWarning() << "XOR mask is empty";
@@ -65,6 +71,23 @@ void FileProcessingService::processFileWithOffset(
 
     while (!sourceFileObj.atEnd())
     {
+        {
+            QMutexLocker lock(&m_mutex);
+
+            while (m_state == ServiceState::Paused)
+            {
+                m_pauseCondition.wait(&m_mutex);
+            }
+
+            if (m_state == ServiceState::Stopped)
+            {
+                sourceFileObj.close();
+                tempFileObj.close();
+
+                return;
+            }
+        }
+
         buffer = sourceFileObj.read(m_bufferSize);
         if (buffer.isEmpty())
         {
@@ -103,4 +126,39 @@ void FileProcessingService::setBufferSize(size_t bufferSize)
 size_t FileProcessingService::bufferSize() const
 {
     return m_bufferSize;
+}
+
+void FileProcessingService::pause()
+{
+    QMutexLocker lock(&m_mutex);
+
+    if (m_state == ServiceState::Running)
+    {
+        m_state = ServiceState::Paused;
+    }
+}
+
+void FileProcessingService::resume()
+{
+    {
+        QMutexLocker lock(&m_mutex);
+
+        if (m_state == ServiceState::Paused)
+        {
+            m_state = ServiceState::Running;
+        }
+    }
+
+    m_pauseCondition.wakeAll();
+}
+
+void FileProcessingService::stop()
+{
+    {
+        QMutexLocker lock(&m_mutex);
+
+        m_state = ServiceState::Stopped;
+    }
+
+    m_pauseCondition.wakeAll();
 }

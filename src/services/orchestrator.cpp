@@ -233,18 +233,78 @@ void Orchestrator::onFileProcessed(const QString &tempFile)
 
 void Orchestrator::pauseProcessing()
 {
-    // TODO
+    if (m_workingState != WorkingState::Running)
+    {
+        return;
+    }
+
+    m_workingState = WorkingState::Paused;
+
+    emit workingStateChanged(m_workingState);
+
+    if (m_searchService)
+    {
+        m_searchService->pause();
+    }
+
+    if (m_processingService)
+    {
+        m_processingService->pause();
+    }
 }
 
 void Orchestrator::cancelProcessing()
 {
-    // TODO
+    if (m_workingState == WorkingState::Idle)
+    {
+        return;
+    }
+
+    if (m_restartTimer->isActive())
+    {
+        m_restartTimer->stop();
+    }
+
+    m_workingState = WorkingState::Cancelled;
+
+    emit workingStateChanged(m_workingState);
+
+    if (m_searchService)
+    {
+        m_searchService->stop();
+    }
+
+    if (m_processingService)
+    {
+        m_processingService->stop();
+    }
+
+    if (!m_currentTempFile.isEmpty())
+    {
+        emit rollbackFileRequested(m_currentTempFile);
+    }
 }
 
-bool Orchestrator::resumeProcessing()
+void Orchestrator::resumeProcessing()
 {
-    // TODO
-    return false;
+    if (m_workingState != WorkingState::Paused)
+    {
+        return;
+    }
+
+    m_workingState = WorkingState::Running;
+
+    emit workingStateChanged(m_workingState);
+
+    if (m_searchService)
+    {
+        m_searchService->resume();
+    }
+
+    if (m_processingService)
+    {
+        m_processingService->resume();
+    }
 }
 
 int Orchestrator::getProgress() const
@@ -296,7 +356,8 @@ void Orchestrator::onCommitFailed()
 
 void Orchestrator::onRollbackFinished()
 {
-    // Откат завершен, ничего дополнительно не требуется
+    m_workingState = WorkingState::Idle;
+    emit workingStateChanged(m_workingState);
 }
 
 void Orchestrator::setRestartTimer(bool enabled, int seconds)
@@ -319,4 +380,8 @@ void Orchestrator::onTimerTimeout()
     emit workingStateChanged(m_workingState);
 
     startProcessing();
+}
+
+WorkingState Orchestrator::getWorkingState() const {
+    return m_workingState;
 }

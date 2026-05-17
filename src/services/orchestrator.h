@@ -52,13 +52,16 @@ public:
     void cancelProcessing();
 
     // Возобновить процесс после паузы
-    bool resumeProcessing();
+    void resumeProcessing();
 
     // Получить текущий прогресс обработки (0-100)
     int getProgress() const;
 
     // Проверить, выполняется ли процесс
     bool isProcessing() const;
+
+    // Getter для состояния
+    WorkingState getWorkingState() const;
 
 signals:
     // Сигналы для UI

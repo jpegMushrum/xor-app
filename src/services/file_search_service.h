@@ -2,7 +2,10 @@
 #define FILE_SEARCH_SERVICE_H
 
 #include "ifile_search_service.h"
+
+#include <QMutex>
 #include <QString>
+#include <QWaitCondition>
 
 // Сервис для поиска файлов - составляет маппу для обработки
 class FileSearchService : public IFileSearchService
@@ -18,6 +21,11 @@ public:
 
     // Создать директорию если её нет
     bool ensureDirectoryExists(const QString &directory) override;
+
+    // Пауза и остановка
+    void pause() override;
+    void resume() override;
+    void stop() override;
 
 public slots:
     // Выполнить поиск файлов асинхронно
@@ -41,6 +49,12 @@ private:
     QString getFileNameWithCounter(
         const QString &resultDirectory,
         const QString &filename) const;
+
+
+    // Состояние меняем синхронно, из разных потоков
+    QMutex m_mutex;
+    QWaitCondition m_pauseCondition;
+    ServiceState m_state = ServiceState::Stopped;
 };
 
 #endif // FILE_SEARCH_SERVICE_H

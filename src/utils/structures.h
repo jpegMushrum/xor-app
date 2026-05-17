@@ -28,6 +28,14 @@ enum class WorkingState
     OnTimer
 };
 
+// Состояние работы сервиса
+enum class ServiceState
+{
+    Running,
+    Paused,
+    Stopped,
+};
+
 // Структура для сохранения задач (вместо мапы)
 struct FileTask
 {

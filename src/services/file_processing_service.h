@@ -2,7 +2,11 @@
 #define FILE_PROCESSING_SERVICE_H
 
 #include "ifile_processing_service.h"
+#include "../utils/structures.h"
+
 #include <QString>
+#include <QMutex>
+#include <QWaitCondition>
 
 // Сервис для обработки файлов с XOR маской
 class FileProcessingService : public IFileProcessingService
@@ -19,6 +23,11 @@ public:
     // Получить текущий размер буфера
     size_t bufferSize() const override;
 
+    // Пауза и остановка
+    void pause() override;
+    void resume() override;
+    void stop() override;
+
 public slots:
     // Обработать файл с применением XOR маски асинхронно
     void processFile(
@@ -33,6 +42,11 @@ public slots:
         qint64 offset) override;
 
 private:
+    // Состояние меняем синхронно, из разных потоков
+    QMutex m_mutex;
+    QWaitCondition m_pauseCondition;
+    ServiceState m_state = ServiceState::Stopped;
+
     size_t m_bufferSize = 1024 * 1024; // 1 MB по умолчанию
 };
 

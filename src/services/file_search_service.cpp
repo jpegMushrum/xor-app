@@ -3,6 +3,7 @@
 #include <QFileInfo>
 #include <QDirIterator>
 #include <QDebug>
+#include <QMutexLocker>
 
 FileSearchService::FileSearchService(QObject *parent)
     : IFileSearchService(parent)
@@ -16,6 +17,12 @@ void FileSearchService::searchFiles(
     const QString &fileMask,
     FileDuplicationRule duplicationRule)
 {
+    {
+        QMutexLocker lock(&m_mutex);
+
+        m_state = ServiceState::Running;
+    }
+
     QVector<FileTask> result;
 
     if (!directoryExists(sourceDirectory))
@@ -34,6 +41,20 @@ void FileSearchService::searchFiles(
 
     while (it.hasNext())
     {
+        {
+            QMutexLocker lock(&m_mutex);
+
+            while (m_state == ServiceState::Paused)
+            {
+                m_pauseCondition.wait(&m_mutex);
+            }
+
+            if (m_state == ServiceState::Stopped)
+            {
+                return;
+            }
+        }
+
         it.next();
 
         if (it.fileInfo().isDir())
@@ -203,3 +224,40 @@ QString FileSearchService::getFileNameWithCounter(
     qDebug() << "Could not find available filename:" << filename;
     return QString();
 }
+
+void FileSearchService::pause()
+{
+    QMutexLocker lock(&m_mutex);
+
+    if (m_state == ServiceState::Running)
+    {
+        m_state = ServiceState::Paused;
+    }
+}
+
+void FileSearchService::resume()
+{
+    {
+        QMutexLocker lock(&m_mutex);
+
+        if (m_state == ServiceState::Paused)
+        {
+            m_state = ServiceState::Running;
+        }
+    }
+
+    m_pauseCondition.wakeAll();
+}
+
+void FileSearchService::stop()
+{
+    {
+        QMutexLocker lock(&m_mutex);
+
+        m_state = ServiceState::Stopped;
+    }
+
+    m_pauseCondition.wakeAll();
+}
+
+

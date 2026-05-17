@@ -20,6 +20,11 @@ public:
     // Создать директорию если её нет
     virtual bool ensureDirectoryExists(const QString &directory) = 0;
 
+    // Пауза и остановка
+    virtual void pause() = 0;
+    virtual void resume() = 0;
+    virtual void stop() = 0;
+
 public slots:
     // Выполнить поиск файлов по маске асинхронно
     virtual void searchFiles(

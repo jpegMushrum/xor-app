@@ -67,24 +67,30 @@ void MainWindowController::onStartButtonClicked()
 
     if (m_orchestrator)
     {
-        FileDuplicationRule duplicationRule = parseDuplicationRule(m_mainWindow->getDuplicationRule());
+        if (m_orchestrator->getWorkingState() == WorkingState::Paused) {
+            m_orchestrator->resumeProcessing();
+        }
+        else
+        {
+            FileDuplicationRule duplicationRule = parseDuplicationRule(m_mainWindow->getDuplicationRule());
 
-        QVector<quint8> xorMask = parseXorMask(m_mainWindow->getXorMask());
+            QVector<quint8> xorMask = parseXorMask(m_mainWindow->getXorMask());
 
-        m_orchestrator->setSearchParameters(
-            m_mainWindow->getSourceDirectory(),
-            m_mainWindow->getTargetDirectory(),
-            m_mainWindow->getFileMask(),
-            duplicationRule,
-            xorMask,
-            m_mainWindow->isDeleteSourceFilesChecked());
+            m_orchestrator->setSearchParameters(
+                m_mainWindow->getSourceDirectory(),
+                m_mainWindow->getTargetDirectory(),
+                m_mainWindow->getFileMask(),
+                duplicationRule,
+                xorMask,
+                m_mainWindow->isDeleteSourceFilesChecked());
 
-        // Установить параметры таймера перезапуска
-        m_orchestrator->setRestartTimer(
-            m_mainWindow->isRestartByTimerChecked(),
-            m_mainWindow->getTimerSeconds());
+            // Установить параметры таймера перезапуска
+            m_orchestrator->setRestartTimer(
+                m_mainWindow->isRestartByTimerChecked(),
+                m_mainWindow->getTimerSeconds());
 
-        m_orchestrator->startProcessing();
+            m_orchestrator->startProcessing();
+        }
     }
 }
 
@@ -201,9 +207,7 @@ QVector<quint8> MainWindowController::parseXorMask(const QString &mask)
         throw std::runtime_error(QString("Unaccessible xor mask value: " + mask).toStdString());
     }
 
-    QByteArray bytes =
-        QByteArray::fromHex(
-            normalized.toUtf8());
+    QByteArray bytes = QByteArray::fromHex(normalized.toUtf8());
 
     if (bytes.size() != 8)
     {
@@ -215,8 +219,7 @@ QVector<quint8> MainWindowController::parseXorMask(const QString &mask)
 
     for (char byte : bytes)
     {
-        result.push_back(
-            static_cast<quint8>(byte));
+        result.push_back(static_cast<quint8>(byte));
     }
 
     return result;

@@ -19,6 +19,11 @@ public:
     // Получить текущий размер буфера
     virtual size_t bufferSize() const = 0;
 
+    // Пауза и остановка
+    virtual void pause() = 0;
+    virtual void resume() = 0;
+    virtual void stop() = 0;
+
 public slots:
     // Обработать файл с применением XOR маски асинхронно
     virtual void processFile(

@@ -316,6 +316,7 @@ void Application::updateStatusBar(WorkingState state)
         setBrowseButtonsEnabled(false);
         break;
     }
+
     m_statusBar->showMessage(statusText);
     m_startButton->setText(startButtonText);
 }
