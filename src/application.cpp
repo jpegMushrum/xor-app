@@ -198,6 +198,7 @@ void Application::setDependencies()
     connect(m_workerThread, &QThread::finished, m_fileProcessor, &QObject::deleteLater);
 
     m_orchestrator = new Orchestrator(m_searchService, m_processingService, m_fileProcessor, this);
+    m_workerThread->start();
 }
 
 void Application::setController()
@@ -208,6 +209,11 @@ void Application::setController()
 
 Application::~Application()
 {
+    if (m_workerThread && m_workerThread->isRunning())
+    {
+        m_workerThread->quit();
+        m_workerThread->wait();
+    }
 }
 
 QString Application::getSourceDirectory() const
