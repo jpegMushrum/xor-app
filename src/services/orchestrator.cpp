@@ -267,10 +267,6 @@ void Orchestrator::cancelProcessing()
         m_restartTimer->stop();
     }
 
-    m_workingState = WorkingState::Cancelled;
-
-    emit workingStateChanged(m_workingState);
-
     if (m_searchService)
     {
         m_searchService->stop();
@@ -283,8 +279,20 @@ void Orchestrator::cancelProcessing()
 
     if (!m_currentTempFile.isEmpty())
     {
+        m_workingState = WorkingState::Cancelled;
+
+        emit workingStateChanged(m_workingState);
+
         emit rollbackFileRequested(m_currentTempFile);
+
+        return;
     }
+
+    m_workingState = WorkingState::Idle;
+
+    emit workingStateChanged(m_workingState);
+
+    emit processingFinished();
 }
 
 void Orchestrator::resumeProcessing()

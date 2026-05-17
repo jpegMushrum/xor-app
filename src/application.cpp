@@ -37,7 +37,7 @@ Application::Application(QWidget *parent)
 
 void Application::setUi()
 {
-    setFixedSize(600, 280);
+    setFixedSize(600, 300);
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
@@ -138,7 +138,7 @@ void Application::setUi()
 
     m_xorMask = new QLineEdit(central);
     m_xorMask->setPlaceholderText("0123456789ABCDEF");
-    m_xorMask->setMaximumWidth(120);
+    m_xorMask->setMaximumWidth(130);
     fifthRowLayout->addWidget(m_xorMask);
 
     fifthRowLayout->addStretch();
@@ -418,9 +418,7 @@ void Application::updateProgress(
         return;
     }
 
-    int percent = static_cast<int>(
-        (static_cast<double>(current) / total) * 100.0
-        );
+    int percent = static_cast<int>((static_cast<double>(current) / total) * 100.0);
 
     m_progressBar->setValue(percent);
 
