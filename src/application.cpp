@@ -29,6 +29,8 @@ Application::Application(QWidget *parent)
       m_searchService(nullptr), m_processingService(nullptr),
       m_fileProcessor(nullptr), m_orchestrator(nullptr)
 {
+    setWindowIcon(QIcon(":/style/icons/xor.ico"));
+
     setUi();
     setStyle();
     connectUISignals();

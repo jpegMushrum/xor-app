@@ -6,5 +6,7 @@
         <file>style/icons/folder.png</file>
         <file>style/icons/pause.png</file>
         <file>style/icons/stop-button.png</file>
+        <file>style/icons/xor.ico</file>
+        <file>style/icons/xor.png</file>
     </qresource>
 </RCC>
