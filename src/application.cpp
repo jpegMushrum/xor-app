@@ -37,13 +37,15 @@ Application::Application(QWidget *parent)
 
 void Application::setUi()
 {
-    setFixedSize(600, 300);
+    setFixedSize(600, 280);
 
     QWidget *central = new QWidget(this);
     setCentralWidget(central);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(central);
     mainLayout->setSpacing(15);
+    mainLayout->setContentsMargins(12, 12, 12, 12);
+    mainLayout->setAlignment(Qt::AlignCenter);
 
     QHBoxLayout *firstRowLayout = new QHBoxLayout();
     firstRowLayout->setSpacing(3);
@@ -65,14 +67,14 @@ void Application::setUi()
     mainLayout->addLayout(firstRowLayout);
 
     QHBoxLayout *secondRowLayout = new QHBoxLayout();
-    secondRowLayout->setSpacing(2);
+    secondRowLayout->setSpacing(3);
 
     m_sourceDir = new QLineEdit(central);
     m_sourceDir->setPlaceholderText("Исходная папка");
     secondRowLayout->addWidget(m_sourceDir);
 
     m_browseSourceButton = new QToolButton(central);
-    m_browseSourceButton->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
+    m_browseSourceButton->setIcon(QIcon(":/style/icons/folder.png"));
     secondRowLayout->addWidget(m_browseSourceButton);
 
     secondRowLayout->addSpacing(10);
@@ -82,12 +84,13 @@ void Application::setUi()
     secondRowLayout->addWidget(m_targetDir);
 
     m_browseTargetButton = new QToolButton(central);
-    m_browseTargetButton->setIcon(style()->standardIcon(QStyle::SP_DirOpenIcon));
+    m_browseTargetButton->setIcon(QIcon(":/style/icons/folder.png"));
     secondRowLayout->addWidget(m_browseTargetButton);
 
     mainLayout->addLayout(secondRowLayout);
 
     QHBoxLayout *thirdRowLayout = new QHBoxLayout();
+    thirdRowLayout->setSpacing(3);
 
     QLabel *similarFilesText = new QLabel(central);
     similarFilesText->setText("При повторении имен файлов:");
@@ -154,7 +157,6 @@ void Application::setUi()
     sixthRowLayout->setSpacing(3);
 
     QHBoxLayout *progressLayout = new QHBoxLayout();
-    progressLayout->setSpacing(5);
 
     m_progressLabel = new QLabel(central);
     m_progressLabel->setText("Нет активной обработки");
@@ -169,12 +171,12 @@ void Application::setUi()
     sixthRowLayout->addLayout(progressLayout);
 
     m_pauseButton = new QToolButton(central);
-    m_pauseButton->setIcon(style()->standardIcon(QStyle::SP_MediaPause));
+    m_pauseButton->setIcon(QIcon(":/style/icons/pause.png"));
     m_pauseButton->setDisabled(true);
     sixthRowLayout->addWidget(m_pauseButton);
 
     m_cancelButton = new QToolButton(central);
-    m_cancelButton->setIcon(style()->standardIcon(QStyle::SP_MediaStop));
+    m_cancelButton->setIcon(QIcon(":/style/icons/stop-button.png"));
     m_cancelButton->setDisabled(true);
     sixthRowLayout->addWidget(m_cancelButton);
 
@@ -319,7 +321,6 @@ void Application::updateState(WorkingState state)
         statusText = "Приостановлено";
         startButtonText = "Продолжить";
 
-        // UI полностью locked
         setInputsEnabled(false);
 
         setStartButtonEnabled(true);
@@ -348,7 +349,6 @@ void Application::updateState(WorkingState state)
         statusText = "Перезапуск по таймеру";
         startButtonText = "Старт";
 
-        // Нельзя менять параметры между автозапусками
         setInputsEnabled(false);
 
         setStartButtonEnabled(true);

@@ -3,5 +3,8 @@
         <file>style/application.qss</file>
         <file>style/icons/drop-down-arrow.png</file>
         <file>style/icons/check.png</file>
+        <file>style/icons/folder.png</file>
+        <file>style/icons/pause.png</file>
+        <file>style/icons/stop-button.png</file>
     </qresource>
 </RCC>
